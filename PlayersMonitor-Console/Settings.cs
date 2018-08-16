@@ -8,6 +8,6 @@ namespace PlayersMonitor
     public static class Settings
     {
 
-        public static readonly string TitleStyle = "$IP:$PORT($PING_TIME)";
+        public static readonly string TitleStyle = "$IP:$PORT($PING_TIMEms)";
     }
 }

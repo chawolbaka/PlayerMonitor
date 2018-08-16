@@ -15,13 +15,18 @@ namespace PlayersMonitor
         {
 
             Initialization();
+            Config.ServerHost = "dx.g.mcmiao.com";
+            Config.ServerPort = 37554;
             
             Ping ping = new Ping(Config.ServerHost, Config.ServerPort);
-            Screen.Initializa();
+            Screen.Initializa("服务端版本:", "在线人数:");
             while (true)
             {
                 var PingResult = ping.Send();
-                Console.Title = $"{Config.ServerHost}:{Config.ServerPort}({PingResult.Time / 10000.0}ms)";
+                Console.Title = Settings.TitleStyle.
+                    Replace("$IP", Config.ServerHost).
+                    Replace("$PORT", Config.ServerPort.ToString()).
+                    Replace("$PING_TIME", (PingResult.Time / 10000.0).ToString());
                 Screen.SetTopStringValue($"&a{PingResult.Version.Name}", 0);
                 Screen.SetTopStringValue($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1);
                 Thread.Sleep(Config.SleepTime);

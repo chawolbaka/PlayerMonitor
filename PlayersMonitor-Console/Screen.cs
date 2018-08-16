@@ -7,11 +7,11 @@ namespace PlayersMonitor
 {
     internal static class Screen
     {
-        private static readonly string[] TopString = new string[] { "服务端版本:" , "在线人数:" };
+        private static string[] TopString;
 
-
-        public static void Initializa()
+        public static void Initializa(params string[] topString)
         {
+            TopString = topString;
             Console.CursorVisible = false;
             foreach (var info in TopString)
             {
