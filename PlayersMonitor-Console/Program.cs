@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
 using System.Text;
-using System.Net.Sockets;
-using System.Net;
-using MinecraftProtocol;
-using MinecraftProtocol.DataType;
+using System.Collections.Generic;
+using MinecraftProtocol.Utils;
 using System.Text.RegularExpressions;
-using System.Diagnostics;
+using System.Threading;
 
-namespace PlayersMonitor_Console
+namespace PlayersMonitor
 {
     
     class Program
@@ -18,14 +13,27 @@ namespace PlayersMonitor_Console
         public static Configuration Config;
         static void Main(string[] args)
         {
-            Initialization();
 
-            Console.ReadKey();
+            Initialization();
+            
+            Ping ping = new Ping(Config.ServerHost, Config.ServerPort);
+            Screen.Initializa();
+            while (true)
+            {
+                var PingResult = ping.Send();
+                Console.Title = $"{Config.ServerHost}:{Config.ServerPort}({PingResult.Time / 10000.0}ms)";
+                Screen.SetTopStringValue($"&a{PingResult.Version.Name}", 0);
+                Screen.SetTopStringValue($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1);
+                Thread.Sleep(Config.SleepTime);
+            }
+
         }
         static void Initialization()
         {
             Config = Configuration.Load(Environment.GetCommandLineArgs());
-
+            Console.InputEncoding = Encoding.UTF8;
+            Console.OutputEncoding = Encoding.UTF8;
+            #if (DEBUG==false)
             if (string.IsNullOrWhiteSpace(Config.ServerHost))
             {
                 Console.Write("服务器地址:");
@@ -86,6 +94,7 @@ namespace PlayersMonitor_Console
                 }
                 Config.ServerPort = tmp;
             }
+            #endif
         }
     }
 }

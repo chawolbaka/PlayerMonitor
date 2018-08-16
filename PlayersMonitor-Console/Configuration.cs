@@ -1,14 +1,14 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace PlayersMonitor_Console
+namespace PlayersMonitor
 {
     public class Configuration
     {
         public string ServerHost { get; set; }
         public ushort ServerPort { get; set; }
 
-        public uint SleepTime { get; set; } = 1500;
+        public int SleepTime { get; set; } = 1500;
         public uint Blood { get; set; }
         public bool AutoSetBlood { get; set; } = false;
 
@@ -47,13 +47,13 @@ namespace PlayersMonitor_Console
                 }
                 else if (args[i] == "-s" || args[i] == "-sleep" && args.Length >= i + 1)
                 {
-                    if (uint.TryParse(args[i + 1], out uint tmp) == false)
+                    if (int.TryParse(args[i + 1], out int tmp) == false&&tmp>=0)
                     {
-                        Console.WriteLine($"参数错误{Environment.NewLine}Use:-s (0-{uint.MaxValue})");
+                        Console.WriteLine($"参数错误{Environment.NewLine}Use:-s (0-{int.MaxValue})");
                         System.Environment.Exit(0);
                     }
                     else
-                        config.Blood = tmp;
+                        config.SleepTime= tmp;
                 }
             }
             return config;
