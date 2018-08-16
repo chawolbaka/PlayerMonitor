@@ -9,5 +9,6 @@ namespace PlayersMonitor
     {
 
         public static readonly string TitleStyle = "$IP:$PORT($PING_TIMEms)";
+        public static readonly Version ProgromVersion = new Version("1.0.0");
     }
 }

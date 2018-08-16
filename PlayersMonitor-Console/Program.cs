@@ -13,25 +13,38 @@ namespace PlayersMonitor
         public static Configuration Config;
         static void Main(string[] args)
         {
-
             Initialization();
+            //Test Server
             Config.ServerHost = "dx.g.mcmiao.com";
             Config.ServerPort = 37554;
-            
+
             Ping ping = new Ping(Config.ServerHost, Config.ServerPort);
-            Screen.Initializa("服务端版本:", "在线人数:");
+            FirstPrint(ping);
             while (true)
             {
                 var PingResult = ping.Send();
                 Console.Title = Settings.TitleStyle.
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
-                    Replace("$PING_TIME", (PingResult.Time / 10000.0).ToString());
+                    Replace("$PING_TIME", ((float)(PingResult.Time / 10000.0f)).ToString("F2"));
                 Screen.SetTopStringValue($"&a{PingResult.Version.Name}", 0);
                 Screen.SetTopStringValue($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1);
                 Thread.Sleep(Config.SleepTime);
             }
 
+        }
+        static void FirstPrint(Ping ping)
+        {
+            //区别:可以一下子就把信息显示出来,降低延迟感
+            var PingResult = ping.Send();
+            Console.Title = Settings.TitleStyle.
+                Replace("$IP", Config.ServerHost).
+                Replace("$PORT", Config.ServerPort.ToString()).
+                Replace("$PING_TIME", ((float)(PingResult.Time / 10000.0f)).ToString("F2"));
+            Screen.Initializa("服务端版本:", "在线人数:");
+            Screen.SetTopStringValue($"&a{PingResult.Version.Name}", 0);
+            Screen.SetTopStringValue($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1);
+            Thread.Sleep(Config.SleepTime);
         }
         static void Initialization()
         {

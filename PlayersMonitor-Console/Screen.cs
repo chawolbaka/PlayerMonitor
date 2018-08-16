@@ -20,23 +20,30 @@ namespace PlayersMonitor
         }
         public static void SetTopStringValue(string newValue, int y)
         {
-
-            switch (y)
+            int TopStringLength = 0;
+            foreach (var text in TopString[y])
             {
-                case 0: WriteAt(newValue, (TopString[0].Length * 2) - 1, 0); break;
-                case 1: WriteAt(newValue, (TopString[1].Length * 2) - 1, 1); break;
+                int tmp = Encoding.UTF8.GetBytes(text.ToString()).Length;
+                switch (tmp)
+                {
+                    case 3: TopStringLength += 2; break;
+                    case 4: TopStringLength += 2; break;
+                    default: TopStringLength += tmp; break;
+                }
             }
+            WriteAt(newValue, TopStringLength, y);
+            WriteWhiteSpaceAt(20, TopStringLength + newValue.Length-2, y);
         }
-        public static void WriteEmptyAt(int length,int start_x, int start_y)
+        public static void WriteWhiteSpaceAt(int length,int start_x, int start_y)
         {
             if (length>0)
             {
-                StringBuilder empty = new StringBuilder();
+                StringBuilder WhiteSpace = new StringBuilder();
                 for (int i = 0; i < length; i++)
                 {
-                    empty.Append(" ");
+                    WhiteSpace.Append(" ");
                 }
-                WriteAt(empty.ToString(), start_x, start_y);
+                WriteAt(WhiteSpace.ToString(), start_x, start_y);
             }
         }
         public static void WriteAt(string s, int x, int y)
