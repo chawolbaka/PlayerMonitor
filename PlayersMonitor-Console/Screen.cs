@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using MinecraftProtocol.DataType;
 
 namespace PlayersMonitor
 {
+    //无视效率,只要不造成闪烁就可以啦
     internal static class Screen
     {
         private static string[] TopString;
+        private static string[] TopStringValueBuff;
 
         public static void Initializa(params string[] topString)
         {
             TopString = topString;
-            Console.CursorVisible = false;
+            TopStringValueBuff = new string[TopString.Length];
             foreach (var info in TopString)
             {
                 CorlorsPrint(info, true);
@@ -20,23 +21,33 @@ namespace PlayersMonitor
         }
         public static void SetTopStringValue(string newValue, int y)
         {
-            int TopStringLength = 0;
-            foreach (var text in TopString[y])
+            if (y > TopString.Length)
+                throw new ArgumentOutOfRangeException("y",y,
+                    $"\"y\" out of initialization range(initialization set:{TopString.Length})");
+            if (TopStringValueBuff[y] != newValue && !string.IsNullOrWhiteSpace(newValue))
             {
-                int tmp = Encoding.UTF8.GetBytes(text.ToString()).Length;
-                switch (tmp)
+                int HeadStringColorCodeCount = ~(GetColorCodeCount(TopString[y]) * 2) + 1;
+                int TopStringLength = HeadStringColorCodeCount;
+                foreach (var text in TopString[y])
                 {
-                    case 3: TopStringLength += 2; break;
-                    case 4: TopStringLength += 2; break;
-                    default: TopStringLength += tmp; break;
+                    int tmp = Encoding.UTF8.GetBytes(text.ToString()).Length;
+                    switch (tmp)
+                    {
+                        case 3: TopStringLength += 2; break;
+                        case 4: TopStringLength += 2; break;
+                        default: TopStringLength += tmp; break;
+                    }
                 }
+                WriteAt(newValue, TopStringLength, y);
+                //清理多余的文本
+                if (!string.IsNullOrWhiteSpace(TopStringValueBuff[y])) //第一次不需要清理
+                    WriteWhiteSpaceAt(16, TopStringLength + newValue.Length-2, y);//这边长度计算有问题
+                TopStringValueBuff[y] = newValue;
             }
-            WriteAt(newValue, TopStringLength, y);
-            WriteWhiteSpaceAt(20, TopStringLength + newValue.Length-2, y);
         }
         public static void WriteWhiteSpaceAt(int length,int start_x, int start_y)
         {
-            if (length>0)
+            if (length > 0)
             {
                 StringBuilder WhiteSpace = new StringBuilder();
                 for (int i = 0; i < length; i++)
@@ -50,10 +61,12 @@ namespace PlayersMonitor
         {
             int buff_top = Console.CursorTop;
             int buff_left = Console.CursorLeft;
+
+            Console.CursorVisible = false;
             Console.SetCursorPosition(x, y);
             CorlorsPrint(s);
-            Console.CursorTop = buff_top;
-            Console.CursorLeft = buff_left;
+            Console.SetCursorPosition(buff_top, buff_left);
+            Console.CursorVisible = true;
         }
         public static void CorlorsPrint(string s, bool line = false)
         {
@@ -89,5 +102,39 @@ namespace PlayersMonitor
                 Console.WriteLine();
             Console.ResetColor();
         }
+        public static int GetColorCodeCount(string s)
+        {
+            int result = 0;
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (s[i] == '&')
+                {
+                    switch (s[i + 1])
+                    {
+                        case '0': result += 1; break;
+                        case '1': result += 1; break;
+                        case '2': result += 1; break;
+                        case '3': result += 1; break;
+                        case '4': result += 1; break;
+                        case '5': result += 1; break;
+                        case '6': result += 1; break;
+                        case '7': result += 1; break;
+                        case '8': result += 1; break;
+                        case '9': result += 1; break;
+                        case 'a': result += 1; break;
+                        case 'b': result += 1; break;
+                        case 'c': result += 1; break;
+                        case 'd': result += 1; break;
+                        case 'e': result += 1; break;
+                        case 'f': result += 1; break;
+                        case 'r': result += 1; break;
+                    }
+                    i += 2;
+                }
+
+            }
+            return result;
+        }
+
     }
 }

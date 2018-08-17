@@ -13,12 +13,13 @@ namespace PlayersMonitor
         public static Configuration Config;
         static void Main(string[] args)
         {
-            Initialization();
+            Initializa();
             //Test Server
             Config.ServerHost = "dx.g.mcmiao.com";
             Config.ServerPort = 37554;
 
             Ping ping = new Ping(Config.ServerHost, Config.ServerPort);
+
             FirstPrint(ping);
             while (true)
             {
@@ -27,9 +28,14 @@ namespace PlayersMonitor
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
                     Replace("$PING_TIME", ((float)(PingResult.Time / 10000.0f)).ToString("F2"));
-                Screen.SetTopStringValue($"&a{PingResult.Version.Name}", 0);
+                Screen.SetTopStringValue(GetServerVersionNameColor(PingResult.Version.Name), 0);
                 Screen.SetTopStringValue($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1);
-                Thread.Sleep(Config.SleepTime);
+                foreach (var player in PingResult.Player.Samples)
+                {
+                    PlayerList.Add(player.Name, player.Id);
+                }
+
+                //Thread.Sleep(Config.SleepTime);
             }
 
         }
@@ -42,11 +48,14 @@ namespace PlayersMonitor
                 Replace("$PORT", Config.ServerPort.ToString()).
                 Replace("$PING_TIME", ((float)(PingResult.Time / 10000.0f)).ToString("F2"));
             Screen.Initializa("服务端版本:", "在线人数:");
-            Screen.SetTopStringValue($"&a{PingResult.Version.Name}", 0);
+            Screen.SetTopStringValue(GetServerVersionNameColor(PingResult.Version.Name), 0);
             Screen.SetTopStringValue($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1);
-            Thread.Sleep(Config.SleepTime);
+            foreach (var player in PingResult.Player.Samples)
+            {
+                PlayerList.Add(player.Name, player.Id);
+            }
         }
-        static void Initialization()
+        static void Initializa()
         {
             Config = Configuration.Load(Environment.GetCommandLineArgs());
             Console.InputEncoding = Encoding.UTF8;
@@ -113,6 +122,18 @@ namespace PlayersMonitor
                 Config.ServerPort = tmp;
             }
             #endif
+			Console.Clear();
+            PlayerList.Initializa(Config);
+        }
+        static string GetServerVersionNameColor(string serverVersionName)
+        {
+            //绿色代表支持显示玩家,黄色代表未知,红色代表不支持(不精确,可能哪天突然这个服务端就不支持了)
+            if (serverVersionName.ToLower().Contains("spigot"))
+                return $"&a{serverVersionName}";
+            else if (serverVersionName.ToLower().Contains("thermos"))
+                return $"&c{serverVersionName}";
+            else
+                return $"&e{serverVersionName}";
         }
     }
 }
