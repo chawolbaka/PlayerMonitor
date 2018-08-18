@@ -9,7 +9,7 @@ namespace PlayersMonitor
     {
         private static string[] TopString;
         private static string[] TopStringValueBuff;
-
+        private static List<Line> Lines = new List<Line>();
         public static void Initializa(params string[] topString)
         {
             TopString = topString;
@@ -28,22 +28,46 @@ namespace PlayersMonitor
             {
                 int HeadStringColorCodeCount = ~(GetColorCodeCount(TopString[y]) * 2) + 1;
                 int TopStringLength = HeadStringColorCodeCount;
-                foreach (var text in TopString[y])
-                {
-                    int tmp = Encoding.UTF8.GetBytes(text.ToString()).Length;
-                    switch (tmp)
-                    {
-                        case 3: TopStringLength += 2; break;
-                        case 4: TopStringLength += 2; break;
-                        default: TopStringLength += tmp; break;
-                    }
-                }
+                TopStringLength += GetStringLength(TopString[y]);
+                //foreach (var text in TopString[y])
+                //{
+                //    int tmp = Encoding.UTF8.GetBytes(text.ToString()).Length;
+                //    switch (tmp)
+                //    {
+                //        case 3: TopStringLength += 2; break;
+                //        case 4: TopStringLength += 2; break;
+                //        default: TopStringLength += tmp; break;
+                //    }
+                //}
                 WriteAt(newValue, TopStringLength, y);
                 //清理多余的文本
                 if (!string.IsNullOrWhiteSpace(TopStringValueBuff[y])) //第一次不需要清理
                     WriteWhiteSpaceAt(16, TopStringLength + newValue.Length-2, y);//这边长度计算有问题
                 TopStringValueBuff[y] = newValue;
             }
+        }
+        public static string CreateLine(int y ,params string[] fields)
+        {
+            if (Lines.Count > 0 && Lines.Find(v => v.y == y).y == y)
+                throw new ArgumentException("This Line is Existed", nameof(y));
+            Line NetLine = new Line();
+            NetLine.y = y;
+            NetLine.Tag = Guid.NewGuid().ToString();
+            //开始计算3种长度
+
+
+            Lines.Add(NetLine);
+            foreach (var field in NetLine.Fields)
+            {
+                WriteAt(field.Value, y + TopString.Length);
+            }
+            return NetLine.Tag;
+        }
+        public static void ReviseLineField(string NewValue,int fieldLocation, string tag)
+        {
+            Line line = Lines.Find(x => x.Tag == tag);
+            if (line.Fields[fieldLocation].Value == NewValue)
+                return;
         }
         public static void WriteWhiteSpaceAt(int length,int start_x, int start_y)
         {
@@ -61,11 +85,27 @@ namespace PlayersMonitor
         {
             int buff_top = Console.CursorTop;
             int buff_left = Console.CursorLeft;
-
+            bool HasColorCode = s.Contains('&');
             Console.CursorVisible = false;
             Console.SetCursorPosition(x, y);
-            CorlorsPrint(s);
-            Console.SetCursorPosition(buff_top, buff_left);
+            if (HasColorCode == true)
+                CorlorsPrint(s);
+            else
+                Console.Write(s);
+            Console.SetCursorPosition(buff_left, buff_top);
+            Console.CursorVisible = true;
+        }
+        public static void WriteAt(string s, int y)
+        {
+            int buff_top = Console.CursorTop;
+            bool HasColorCode = s.Contains('&');
+            Console.CursorVisible = false;
+            Console.SetCursorPosition(Console.CursorLeft, y);
+            if (HasColorCode == true)
+                CorlorsPrint(s);
+            else
+                Console.Write(s);
+            Console.SetCursorPosition(Console.CursorLeft, buff_top);
             Console.CursorVisible = true;
         }
         public static void CorlorsPrint(string s, bool line = false)
@@ -76,27 +116,29 @@ namespace PlayersMonitor
                 {
                     switch (s[i + 1])
                     {
-                        case '0': Console.ForegroundColor = ConsoleColor.Black; break; 
-                        case '1': Console.ForegroundColor = ConsoleColor.DarkBlue; break;
-                        case '2': Console.ForegroundColor = ConsoleColor.DarkGreen; break;
-                        case '3': Console.ForegroundColor = ConsoleColor.DarkCyan; break;
-                        case '4': Console.ForegroundColor = ConsoleColor.DarkRed; break;
-                        case '5': Console.ForegroundColor = ConsoleColor.DarkMagenta; break;
-                        case '6': Console.ForegroundColor = ConsoleColor.DarkYellow; break;
-                        case '7': Console.ForegroundColor = ConsoleColor.Gray; break;
-                        case '8': Console.ForegroundColor = ConsoleColor.DarkGray; break;
-                        case '9': Console.ForegroundColor = ConsoleColor.Blue; break;
-                        case 'a': Console.ForegroundColor = ConsoleColor.Green; break;
-                        case 'b': Console.ForegroundColor = ConsoleColor.Cyan; break;
-                        case 'c': Console.ForegroundColor = ConsoleColor.Red; break;
-                        case 'd': Console.ForegroundColor = ConsoleColor.Magenta; break;
-                        case 'e': Console.ForegroundColor = ConsoleColor.Yellow; break;
-                        case 'f': Console.ForegroundColor = ConsoleColor.White; break;
-                        case 'r': Console.ResetColor(); break;
+                        case '0': Console.ForegroundColor = ConsoleColor.Black; i += 2; break; 
+                        case '1': Console.ForegroundColor = ConsoleColor.DarkBlue; i += 2; break;
+                        case '2': Console.ForegroundColor = ConsoleColor.DarkGreen; i += 2; break;
+                        case '3': Console.ForegroundColor = ConsoleColor.DarkCyan; i += 2; break;
+                        case '4': Console.ForegroundColor = ConsoleColor.DarkRed; i += 2; break;
+                        case '5': Console.ForegroundColor = ConsoleColor.DarkMagenta; i += 2; break;
+                        case '6': Console.ForegroundColor = ConsoleColor.DarkYellow; i += 2; break;
+                        case '7': Console.ForegroundColor = ConsoleColor.Gray; i += 2; break;
+                        case '8': Console.ForegroundColor = ConsoleColor.DarkGray; i += 2; break;
+                        case '9': Console.ForegroundColor = ConsoleColor.Blue; i += 2; break;
+                        case 'a': Console.ForegroundColor = ConsoleColor.Green; i += 2; break;
+                        case 'b': Console.ForegroundColor = ConsoleColor.Cyan; i += 2; break;
+                        case 'c': Console.ForegroundColor = ConsoleColor.Red; i += 2; break;
+                        case 'd': Console.ForegroundColor = ConsoleColor.Magenta; i += 2; break;
+                        case 'e': Console.ForegroundColor = ConsoleColor.Yellow; i += 2; break;
+                        case 'f': Console.ForegroundColor = ConsoleColor.White; i += 2; break;
+                        case 'r': Console.ResetColor(); i += 2; break;
                     }
-                    i+=2;
                 }
+                if (i >= s.Length)
+                    break;
                 Console.Write(s[i]);
+                
             }
             if (line == true)
                 Console.WriteLine();
@@ -111,30 +153,57 @@ namespace PlayersMonitor
                 {
                     switch (s[i + 1])
                     {
-                        case '0': result += 1; break;
-                        case '1': result += 1; break;
-                        case '2': result += 1; break;
-                        case '3': result += 1; break;
-                        case '4': result += 1; break;
-                        case '5': result += 1; break;
-                        case '6': result += 1; break;
-                        case '7': result += 1; break;
-                        case '8': result += 1; break;
-                        case '9': result += 1; break;
-                        case 'a': result += 1; break;
-                        case 'b': result += 1; break;
-                        case 'c': result += 1; break;
-                        case 'd': result += 1; break;
-                        case 'e': result += 1; break;
-                        case 'f': result += 1; break;
-                        case 'r': result += 1; break;
+                        case '0': result += 1; i += 2; break;
+                        case '1': result += 1; i += 2; break;
+                        case '2': result += 1; i += 2; break;
+                        case '3': result += 1; i += 2; break;
+                        case '4': result += 1; i += 2; break;
+                        case '5': result += 1; i += 2; break;
+                        case '6': result += 1; i += 2; break;
+                        case '7': result += 1; i += 2; break;
+                        case '8': result += 1; i += 2; break;
+                        case '9': result += 1; i += 2; break;
+                        case 'a': result += 1; i += 2; break;
+                        case 'b': result += 1; i += 2; break;
+                        case 'c': result += 1; i += 2; break;
+                        case 'd': result += 1; i += 2; break;
+                        case 'e': result += 1; i += 2; break;
+                        case 'f': result += 1; i += 2; break;
+                        case 'r': result += 1; i += 2; break;
                     }
-                    i += 2;
                 }
 
             }
             return result;
         }
+        private static int GetStringLength(string s)
+        {
+            int length = 0;
+            foreach (var text in s)
+            {
+                int tmp = Encoding.UTF8.GetBytes(text.ToString()).Length;
+                switch (tmp)
+                {
+                    case 3: length += 2; break;
+                    case 4: length += 2; break;
+                    default: length += tmp; break;
+                }
+            }
+            return length;
 
+        }
+        private class Line
+        {
+            public int y { get; set; }
+            public List<Field> Fields { get; set; } = new List<Field>();
+            public string Tag { get; set; }
+            public class Field
+            {
+                public string Value { get; set; }
+                public int StartLocation { get; set; }
+                public int EndLocation { get; set; }
+                public int Length { get; set; }
+            }
+        }
     }
 }

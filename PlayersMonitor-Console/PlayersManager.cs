@@ -1,0 +1,127 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Text;
+using System.Threading;
+using MinecraftProtocol.DataType;
+
+namespace PlayersMonitor
+{
+    public class PlayersManager
+    {
+        public delegate void PlayerJoinedEvntHandler(Player player);
+        public delegate void PlayerDisconnectedEvntHandler(Player player);
+        public event PlayerDisconnectedEvntHandler PlayerDisconnectedEvent;
+        public event PlayerJoinedEvntHandler PlayerJoinedEvnt;
+
+        private Configuration Config;
+        private List<Player> PlayersList = new List<Player>();
+        public bool? IsOnlineMode;
+        public PlayersManager(Configuration config)
+        {
+            Config = config ?? throw new ArgumentNullException(nameof(config));
+        }
+        public void Add(string name, Guid uuid)
+        {
+            int DefPlayerBlood = PlayersList.Count < 12 ? 1 : Config.Blood;
+            if (Config == null)
+                throw new Exception("Not Initializtion");
+            Player FoundPlayer = PlayersList.Find(x => x.Uuid.ToString() == uuid.ToString());
+            if (FoundPlayer != null && PlayersList.Count >= 12) //如果找到了这个玩家就把它的血恢复到默认值(回血)
+            {
+                FoundPlayer.Blood = DefPlayerBlood;
+
+            }
+            else if (FoundPlayer == null)
+            {
+                Player NewPlayer = new Player(name, uuid, DefPlayerBlood);
+                if (PlayersList.Count == 0)
+                {
+                    Thread t = new Thread(iom => IsOnlineMode = NewPlayer.IsOnlineMode());
+                    t.Start();
+                }
+
+                //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
+                NewPlayer.ScreenTag = Screen.CreateLine(PlayersList.Count,
+                    "[", PlayersList.Count + 1.ToString(), "/", $"&a{NewPlayer.Blood.ToString("D2")}", "]",
+                    "Name:", NewPlayer.Name, "(", NewPlayer.Uuid.ToString(), ")");
+                PlayersList.Add(NewPlayer);
+                PlayerJoinedEvnt?.Invoke(NewPlayer);
+            }
+            LifeTimer();
+            //还剩下把玩家列表画上去这个类就差不多写完了
+        }
+        private void LifeTimer()
+        {
+            if (PlayersList.Count < 12)//玩家数量小于12个的情况下每次给会所以的玩家名,所以不需要这个机制的
+                return;
+            foreach (var player in PlayersList)
+            {
+                player.Blood--;
+                if (player.Blood <= 0)
+                {
+                    PlayersList.Remove(player);
+                    PlayerDisconnectedEvent?.Invoke(player);
+                }
+            }
+        }
+
+        public class Player
+        {
+            private bool? HasBuyGame=null;
+            private bool OnlineMode;
+            public Guid Uuid { get; set; }
+            public string Name { get; set; }
+            public int Blood { get; set; }
+            public string ScreenTag { get; set; }
+
+            public Player()
+            {
+
+            }
+            public Player(string name, Guid uuid,int blood)
+            {
+                this.Name = name;
+                this.Uuid = uuid;
+                this.Blood = blood;
+            }
+            
+            
+            /// <summary>
+            /// Need Network
+            /// </summary>
+            public bool? IsOnlineMode()
+            {
+                // GET https://api.mojang.com/users/profiles/minecraft/<username>
+                // 通过这个API获取玩家的UUID,然后和Ping返回的UUID匹配如果不一样的话就是离线模式了
+                if (Uuid != null && !string.IsNullOrWhiteSpace(Name))
+                {
+                    //缓存
+                    if (HasBuyGame != null && HasBuyGame == true)
+                        return OnlineMode;
+                    else if (HasBuyGame != null && HasBuyGame == false)
+                        return false;
+                    //没有缓存的话就去通过API获取
+                    try
+                    {
+                        WebClient wc = new WebClient();
+                        string html = Encoding.UTF8.GetString(wc.DownloadData(
+                            @"https://api.mojang.com/users/profiles/minecraft/" + Name));
+                        HasBuyGame = !string.IsNullOrWhiteSpace(html);
+                        if (HasBuyGame == false)
+                            return null;
+                        OnlineMode = html.Contains(Uuid.ToString().Replace("-", string.Empty));
+                        return OnlineMode;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
+                else
+                    throw new ArgumentNullException("Uuid or Name");
+            }
+        }
+    }
+
+}

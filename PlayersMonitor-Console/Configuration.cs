@@ -9,7 +9,7 @@ namespace PlayersMonitor
         public ushort ServerPort { get; set; }
 
         public int SleepTime { get; set; } = 1500;
-        public uint Blood { get; set; }
+        public int Blood { get; set; } = 8;
         public bool AutoSetBlood { get; set; } = false;
 
 
@@ -37,9 +37,9 @@ namespace PlayersMonitor
                         config.AutoSetBlood = true;
                         continue;
                     }
-                    else if (uint.TryParse(args[i + 1], out uint tmp) == false)
+                    else if (int.TryParse(args[i + 1], out int tmp) == false && tmp >= 0)
                     {
-                        Console.WriteLine($"参数错误{Environment.NewLine}Use:-b (0-{uint.MaxValue})");
+                        Console.WriteLine($"参数错误{Environment.NewLine}Use:-b (0-{int.MaxValue})");
                         System.Environment.Exit(0);
                     }
                     else
