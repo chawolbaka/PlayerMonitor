@@ -26,23 +26,11 @@ namespace PlayersMonitor
                     $"\"y\" out of initialization range(initialization set:{TopString.Length})");
             if (TopStringValueBuff[y] != newValue && !string.IsNullOrWhiteSpace(newValue))
             {
-                int HeadStringColorCodeCount = ~(GetColorCodeCount(TopString[y]) * 2) + 1;
-                int TopStringLength = HeadStringColorCodeCount;
-                TopStringLength += GetStringLength(TopString[y]);
-                //foreach (var text in TopString[y])
-                //{
-                //    int tmp = Encoding.UTF8.GetBytes(text.ToString()).Length;
-                //    switch (tmp)
-                //    {
-                //        case 3: TopStringLength += 2; break;
-                //        case 4: TopStringLength += 2; break;
-                //        default: TopStringLength += tmp; break;
-                //    }
-                //}
+                int TopStringLength = GetStringLength(TopString[y]);
                 WriteAt(newValue, TopStringLength, y);
                 //清理多余的文本
                 if (!string.IsNullOrWhiteSpace(TopStringValueBuff[y])) //第一次不需要清理
-                    WriteWhiteSpaceAt(16, TopStringLength + newValue.Length-2, y);//这边长度计算有问题
+                    WriteWhiteSpaceAt(16, TopStringLength + GetStringLength(newValue), y);//这边长度计算有问题
                 TopStringValueBuff[y] = newValue;
             }
         }
@@ -176,9 +164,9 @@ namespace PlayersMonitor
             }
             return result;
         }
-        private static int GetStringLength(string s)
+        private static int GetStringLength(string s,bool HasColorCodeLength =false)
         {
-            int length = 0;
+            int length = HasColorCodeLength == false? ~(GetColorCodeCount(s) * 2) + 1:0;
             foreach (var text in s)
             {
                 int tmp = Encoding.UTF8.GetBytes(text.ToString()).Length;

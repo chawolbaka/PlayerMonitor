@@ -72,12 +72,12 @@ namespace PlayersMonitor
                     FirstPrint = true;
                 }
                 Screen.SetTopStringValue(GetServerVersionNameColor(PingResult.Version.Name), 0);
-                Screen.SetTopStringValue($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1);
+                Screen.SetTopStringValue($"&f{PingResult.Player.Online+new Random().Next(0,12450)}/{PingResult.Player.Max}", 1);
                 foreach (var player in PingResult.Player.Samples)
                 {
                     PlayersManager.Add(player.Name, Guid.Parse(player.Id));
                 }
-                Thread.Sleep(new Random().Next(0,1500));
+                Thread.Sleep(0);
             }
             return;
         }
