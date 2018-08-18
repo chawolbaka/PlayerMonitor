@@ -119,6 +119,8 @@ namespace PlayersMonitor
             Lines.Clear();
             Console.Clear();
         }
+
+
         private static void WriteAt(string s, int x, int y)
         {
             int buff_top = Console.CursorTop;
