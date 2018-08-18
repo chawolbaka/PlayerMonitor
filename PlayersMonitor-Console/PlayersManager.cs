@@ -23,14 +23,13 @@ namespace PlayersMonitor
         }
         public void Add(string name, Guid uuid)
         {
-            int DefPlayerBlood = PlayersList.Count < 12 ? 1 : Config.Blood;
+            int DefPlayerBlood = PlayersList.Count < 12 ? 2 : Config.Blood;
             if (Config == null)
                 throw new Exception("Not Initializtion");
             Player FoundPlayer = PlayersList.Find(x => x.Uuid.ToString() == uuid.ToString());
-            if (FoundPlayer != null && PlayersList.Count >= 12) //如果找到了这个玩家就把它的血恢复到默认值(回血)
+            if (FoundPlayer != null) //如果找到了这个玩家就把它的血恢复到默认值(回血)
             {
                 FoundPlayer.Blood = DefPlayerBlood;
-
             }
             else if (FoundPlayer == null)
             {
@@ -43,7 +42,7 @@ namespace PlayersMonitor
 
                 //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
                 NewPlayer.ScreenTag = Screen.CreateLine(
-                    "[", PlayersList.Count + 1.ToString(), "/", $"&a{NewPlayer.Blood.ToString("D2")}", "]",
+                    "[", PlayersList.Count + 1.ToString(), "/", $"&a{(NewPlayer.Blood-1).ToString("D2")}", "]",
                     "Name:", NewPlayer.Name, "(", NewPlayer.Uuid.ToString(), ")");
                 PlayersList.Add(NewPlayer);
                 PlayerJoinedEvnt?.Invoke(NewPlayer);
@@ -51,21 +50,31 @@ namespace PlayersMonitor
             LifeTimer();
             //还剩下把玩家列表画上去这个类就差不多写完了
         }
-        private void LifeTimer()
+        public void LifeTimer()
         {
-            if (PlayersList.Count < 12)//玩家数量小于12个的情况下每次给会所以的玩家名,所以不需要这个机制的
-                return;
-            foreach (var player in PlayersList)
+            for (int i = 0; i < PlayersList.Count; i++)
             {
-                player.Blood--;
-                if (player.Blood <= 0)
+                PlayersList[i].Blood--;
+                if (PlayersList[i].Blood <= 0)
                 {
-                    PlayersList.Remove(player);
-                    PlayerDisconnectedEvent?.Invoke(player);
+                    if (PlayersList.Count>1)
+                    {
+                        Screen.RemoveLine(PlayersList[i].ScreenTag);
+                        PlayersList.Remove(PlayersList[i]);
+                        for (int j = i; j < PlayersList.Count; j++)
+                        {
+                            Screen.ReviseLineField(j.ToString("D2"), 1, PlayersList[j].ScreenTag);
+                        }
+                    }
+                    else
+                    {
+                        Screen.RemoveLine(PlayersList[i].ScreenTag,true);
+                        PlayersList.Remove(PlayersList[i]);
+                    }
+                    PlayerDisconnectedEvent?.Invoke(PlayersList[i]);
                 }
             }
         }
-
         public class Player
         {
             private bool? HasBuyGame=null;

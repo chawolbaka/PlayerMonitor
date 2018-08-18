@@ -7,33 +7,7 @@ namespace PlayersMonitor
     //无视效率,只要不造成闪烁就可以啦(QAQ我想不无视也不行呀,要是还要考虑效率的话我怕连一个可以用的版本都发不出来了)
     internal static class Screen
     {
-        private static string[] TopString;
-        private static string[] TopStringValueBuff;
         private static List<Line> Lines = new List<Line>();
-        public static void Initializa(params string[] topString)
-        {
-            TopString = topString;
-            TopStringValueBuff = new string[TopString.Length];
-            foreach (var info in TopString)
-            {
-                CorlorsPrint(info, true);
-            }
-        }
-        public static void SetTopStringValue(string newValue, int y)
-        {
-            if (y > TopString.Length)
-                throw new ArgumentOutOfRangeException("y",y,
-                    $"\"y\" out of initialization range(initialization set:{TopString.Length})");
-            if (TopStringValueBuff[y] != newValue && !string.IsNullOrWhiteSpace(newValue))
-            {
-                int TopStringLength = GetStringLength(TopString[y]);
-                WriteAt(newValue, TopStringLength, y);
-                //清理多余的文本
-                if (!string.IsNullOrWhiteSpace(TopStringValueBuff[y])) //第一次不需要清理
-                    WriteWhiteSpaceAt(16, TopStringLength + GetStringLength(newValue), y);//这边长度计算有问题
-                TopStringValueBuff[y] = newValue;
-            }
-        }
         public static string CreateLine(params string[] fields)
         {
             int y = Lines.Count > 0 ? Lines.Count : 0;
@@ -74,23 +48,23 @@ namespace PlayersMonitor
         {
             Line FoundLine = Lines.Find(x => x.Tag == tag);
             if (FoundLine == null)
-                throw new ArgumentException("tag does not exist", nameof(tag));
+                throw new ArgumentException("Tag does not exist", nameof(tag));
             if (FoundLine.Fields[Location].Value == newValue)
                 return;
             int NewValueLength = GetStringLength(newValue);
             int OldValueLength = GetStringLength(FoundLine.Fields[Location].Value);
             int y = FoundLine.y;
-            //长度相同的话只做替换处理,如果不同的话就要把后面全拆了
-            if (NewValueLength==OldValueLength)
+            //长度相同的话只做替换处理,如果不同的话就要重新计算长度然后把后面的全拆了QAQ
+            if (NewValueLength == OldValueLength)
             {
                 WriteAt(newValue, FoundLine.Fields[Location].StartLocation, FoundLine.y);
-                return;
             }
             else
             {
+                //重新计算长度
                 for (int i = Location; i < FoundLine.Fields.Count; i++)
                 {
-                    if (FoundLine.Fields[i].Length == i)
+                    if (i == Location)
                         FoundLine.Fields[i].Length = NewValueLength;
                     else
                         FoundLine.Fields[i].Length = GetStringLength(FoundLine.Fields[i].Value);
@@ -98,29 +72,54 @@ namespace PlayersMonitor
                     FoundLine.Fields[i].StartLocation = FoundLine.Fields[i - 1].EndLocation;
                     FoundLine.Fields[i].EndLocation = FoundLine.Fields[i].StartLocation + FoundLine.Fields[i].Length;
                 }
-                for (int i = Location+1; i < FoundLine.Fields.Count; i++)
-                {
-                    WriteAt(FoundLine.Fields[i].Value, FoundLine.Fields[i].StartLocation,y);
-                }
+                //把新的内容输出到控制台上
                 WriteAt(newValue, FoundLine.Fields[Location].StartLocation, FoundLine.y);
-                WriteWhiteSpaceAt(10, FoundLine.Fields[FoundLine.Fields.Count - 1].EndLocation, y);
+                //重新输出一下后面的那些字段
+                for (int i = Location + 1; i < FoundLine.Fields.Count; i++)
+                {
+                    WriteAt(FoundLine.Fields[i].Value, FoundLine.Fields[i].StartLocation, y);
+                }
+                //清理历史残留
+                int ClearLength = Console.BufferWidth - FoundLine.Fields[FoundLine.Fields.Count - 1].EndLocation;
+                WriteWhiteSpaceAt(ClearLength, FoundLine.Fields[FoundLine.Fields.Count - 1].EndLocation, y);
             }
             FoundLine.Fields[Location].Value = newValue;
-
         }
-        public static void WriteWhiteSpaceAt(int length,int start_x, int start_y)
+        public static void RemoveLine(string tag,bool rePirint=false)
         {
-            if (length > 0)
+            Line FindResult = Lines.Find(x => x.Tag == tag);
+            if (FindResult == null)
+                throw new ArgumentException("Tag does not exist", nameof(tag));
+            Lines.Remove(FindResult);
+            int ClearLength = Console.BufferWidth;
+            if (Lines.Count==FindResult.y)
             {
-                StringBuilder WhiteSpace = new StringBuilder();
-                for (int i = 0; i < length; i++)
-                {
-                    WhiteSpace.Append(" ");
-                }
-                WriteAt(WhiteSpace.ToString(), start_x, start_y);
+                WriteWhiteSpaceAt(ClearLength, 0, FindResult.y);
             }
+            else
+            {
+                for (int i = FindResult.y; i < Lines.Count; i++)
+                {
+                    Lines[i].y -= 1;
+                    if (rePirint == true)
+                    {
+                        WriteWhiteSpaceAt(ClearLength, 0, Lines[i].y);
+                        WriteWhiteSpaceAt(ClearLength, 0, Lines[i].y + 1);
+                        foreach (var Field in Lines[i].Fields)
+                        {
+                            WriteAt(Field.Value, Field.StartLocation, Lines[i].y);
+                        }
+                    }
+                }
+            }
+            Console.SetCursorPosition(Console.CursorLeft, Console.CursorTop-1);
         }
-        public static void WriteAt(string s, int x, int y)
+        public static void Clear()
+        {
+            Lines.Clear();
+            Console.Clear();
+        }
+        private static void WriteAt(string s, int x, int y)
         {
             int buff_top = Console.CursorTop;
             int buff_left = Console.CursorLeft;
@@ -134,20 +133,19 @@ namespace PlayersMonitor
             Console.SetCursorPosition(buff_left, buff_top);
             Console.CursorVisible = true;
         }
-        public static void WriteAt(string s, int y)
+        private static void WriteWhiteSpaceAt(int length, int start_x, int start_y)
         {
-            int buff_top = Console.CursorTop;
-            bool HasColorCode = s.Contains('&');
-            Console.CursorVisible = false;
-            Console.SetCursorPosition(Console.CursorLeft, y);
-            if (HasColorCode == true)
-                CorlorsPrint(s);
-            else
-                Console.Write(s);
-            Console.SetCursorPosition(Console.CursorLeft, buff_top);
-            Console.CursorVisible = true;
+            if (length > 0)
+            {
+                StringBuilder WhiteSpace = new StringBuilder();
+                for (int i = 0; i < length; i++)
+                {
+                    WhiteSpace.Append(" ");
+                }
+                WriteAt(WhiteSpace.ToString(), start_x, start_y);
+            }
         }
-        public static void CorlorsPrint(string s, bool line = false)
+        private static void CorlorsPrint(string s, bool line = false)
         {
             for (int i = 0; i < s.Length; i++)
             {
@@ -183,7 +181,7 @@ namespace PlayersMonitor
                 Console.WriteLine();
             Console.ResetColor();
         }
-        public static int GetColorCodeCount(string s)
+        private static int GetColorCodeCount(string s)
         {
             int result = 0;
             for (int i = 0; i < s.Length; i++)

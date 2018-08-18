@@ -25,40 +25,43 @@ namespace PlayersMonitor
             Status = Statuses.Initializing;
             Initializa();
             //Test Server
-            Config.ServerHost = "dx.g.mcmiao.com";
-            Config.ServerPort = 37554;
+            Config.ServerHost = "mc-sm.com";
+            Config.ServerPort = 23533;
 
             Ping ping = new Ping(Config.ServerHost, Config.ServerPort);
             Status = Statuses.Monitor;
             Thread PrintThread =  new Thread(StartPrintInfo);
             PrintThread.Start(ping);
-
             while (true)
             {
-                ConsoleKeyInfo InputKey = Console.ReadKey();
-                if (InputKey.Key==ConsoleKey.A&&Status==Statuses.Monitor)
+                ConsoleKeyInfo Input = Console.ReadKey(true);
+                if (Input.Key==ConsoleKey.A&&Status==Statuses.Monitor)
                 {
                     Status =  Statuses.ShowAllInfo;
-                    PrintAllInfo(ping);
-                    Console.ReadKey();
-                    Status = Statuses.Monitor;
-                    new Thread(StartPrintInfo).Start(ping);
+                    //必须等线程结束才能继续,那么问题来啦.我怎么不用死循环来知道线程是不是结束了?
+                    Thread.Sleep(Config.SleepTime + 30);
+                    if (PrintThread.IsAlive == false)
+                    {
+                        PrintAllInfo(ping);
+                        Console.ReadKey();
+                        Status = Statuses.Monitor;
+                        PrintThread = new Thread(StartPrintInfo);
+                        PrintThread.Start();
+                    }
                 }
-                else if (InputKey.Key == ConsoleKey.Q || InputKey.Key == ConsoleKey.Escape)
+                else if (Input.Key == ConsoleKey.Q || Input.Key == ConsoleKey.Escape)
                 {
                     Console.CursorVisible = true;
                     Environment.Exit(0);
                 }
             }
         }
-        
-
         static void StartPrintInfo(object obj)
         {
-            Console.Clear();
+            //Screen.Clear();
             Ping Ping = obj as Ping;
             bool FirstPrint = false;
-
+            string Tag_S = "", Tag_C = "";
             while (Status == Statuses.Monitor)
             {
                 var PingResult = Ping.Send();
@@ -68,23 +71,30 @@ namespace PlayersMonitor
                     Replace("$PING_TIME", ((float)(PingResult.Time / 10000.0f)).ToString("F2"));
                 if (FirstPrint == false)
                 {
-                    Screen.Initializa("服务端版本:", "在线人数:");
+                    Tag_S = Screen.CreateLine("服务端版本:", "");
+                    Tag_C = Screen.CreateLine("在线人数:", "");
                     FirstPrint = true;
                 }
-                Screen.SetTopStringValue(GetServerVersionNameColor(PingResult.Version.Name), 0);
-                Screen.SetTopStringValue($"&f{PingResult.Player.Online+new Random().Next(0,12450)}/{PingResult.Player.Max}", 1);
-                foreach (var player in PingResult.Player.Samples)
+                Screen.ReviseLineField(GetServerVersionNameColor(PingResult.Version.Name), 1, Tag_S);
+                Screen.ReviseLineField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_C);
+                if (PingResult.Player.Samples!=null)
                 {
-                    PlayersManager.Add(player.Name, Guid.Parse(player.Id));
+                    foreach (var player in PingResult.Player.Samples)
+                    {
+                        PlayersManager.Add(player.Name, Guid.Parse(player.Id));
+                    }
                 }
-                Thread.Sleep(0);
+                else
+                {
+                    PlayersManager.LifeTimer();
+                }
+                Thread.Sleep(Config.SleepTime / 2);
             }
             return;
         }
         static void PrintAllInfo(Ping ping)
         {
-            throw new NotImplementedException("暂时不支持显示所以信息(懒的写)");
-            Console.Clear();
+            Screen.Clear();
             var result = ping.Send();
             Console.WriteLine($"服务端版本:{result.Version.Name}({result.Version.Protocol})");
         }
@@ -93,7 +103,7 @@ namespace PlayersMonitor
             Config = Configuration.Load(Environment.GetCommandLineArgs());
             Console.InputEncoding = Encoding.UTF8;
             Console.OutputEncoding = Encoding.UTF8;
-            #if (DEBUG==false)
+#if (DEBUG == false)
             if (string.IsNullOrWhiteSpace(Config.ServerHost))
             {
                 Console.Write("服务器地址:");
@@ -154,16 +164,19 @@ namespace PlayersMonitor
                 }
                 Config.ServerPort = tmp;
             }
-            #endif
-			Console.Clear();
+#endif
+            Screen.Clear();
             PlayersManager = new PlayersManager(Config);
         }
         static string GetServerVersionNameColor(string serverVersionName)
         {
             //绿色代表支持显示玩家,黄色代表未知,红色代表不支持(不精确,可能哪天突然这个服务端就不支持了)
+
             if (serverVersionName.ToLower().Contains("spigot"))
                 return $"&a{serverVersionName}";
             else if (serverVersionName.ToLower().Contains("thermos"))
+                return $"&c{serverVersionName}";
+            else if (serverVersionName.ToLower().Contains("bungeecord"))
                 return $"&c{serverVersionName}";
             else
                 return $"&e{serverVersionName}";
