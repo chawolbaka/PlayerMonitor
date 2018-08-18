@@ -42,7 +42,7 @@ namespace PlayersMonitor
                 }
 
                 //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
-                NewPlayer.ScreenTag = Screen.CreateLine(PlayersList.Count,
+                NewPlayer.ScreenTag = Screen.CreateLine(
                     "[", PlayersList.Count + 1.ToString(), "/", $"&a{NewPlayer.Blood.ToString("D2")}", "]",
                     "Name:", NewPlayer.Name, "(", NewPlayer.Uuid.ToString(), ")");
                 PlayersList.Add(NewPlayer);

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PlayersMonitor
 {
-    //无视效率,只要不造成闪烁就可以啦
+    //无视效率,只要不造成闪烁就可以啦(QAQ我想不无视也不行呀,要是还要考虑效率的话我怕连一个可以用的版本都发不出来了)
     internal static class Screen
     {
         private static string[] TopString;
@@ -34,28 +34,79 @@ namespace PlayersMonitor
                 TopStringValueBuff[y] = newValue;
             }
         }
-        public static string CreateLine(int y ,params string[] fields)
+        public static string CreateLine(params string[] fields)
         {
-            if (Lines.Count > 0 && Lines.Find(v => v.y == y).y == y)
-                throw new ArgumentException("This Line is Existed", nameof(y));
-            Line NetLine = new Line();
-            NetLine.y = y;
-            NetLine.Tag = Guid.NewGuid().ToString();
-            //开始计算3种长度
-
-
-            Lines.Add(NetLine);
-            foreach (var field in NetLine.Fields)
+            int y = Lines.Count > 0 ? Lines.Count : 0;
+            Line NewLine = new Line();
+            NewLine.y = y;
+            NewLine.Tag = Guid.NewGuid().ToString();
+            foreach (var fireld in fields)
             {
-                WriteAt(field.Value, y + TopString.Length);
+                NewLine.Fields.Add(new Line.Field() { Value = fireld });
             }
-            return NetLine.Tag;
+            //计算3种长度
+            for (int i = 0; i < NewLine.Fields.Count; i++)
+            {
+                NewLine.Fields[i].Length = GetStringLength(NewLine.Fields[i].Value);
+                if (i == 0)
+                {
+                    NewLine.Fields[0].StartLocation = 0;
+                    NewLine.Fields[0].EndLocation = NewLine.Fields[0].Length;
+                }
+                else if (i < NewLine.Fields.Count)
+                {
+                    NewLine.Fields[i].StartLocation = NewLine.Fields[i - 1].EndLocation;
+                    NewLine.Fields[i].EndLocation = NewLine.Fields[i].StartLocation + NewLine.Fields[i].Length;
+                }
+                else
+                    break;
+            }
+            Lines.Add(NewLine);
+            //Print
+            foreach (var field in NewLine.Fields) 
+            {
+                WriteAt(field.Value, field.StartLocation,y);
+            }
+            Console.WriteLine();
+            return NewLine.Tag;
         }
-        public static void ReviseLineField(string NewValue,int fieldLocation, string tag)
+        public static void ReviseLineField(string newValue,int Location, string tag)
         {
-            Line line = Lines.Find(x => x.Tag == tag);
-            if (line.Fields[fieldLocation].Value == NewValue)
+            Line FoundLine = Lines.Find(x => x.Tag == tag);
+            if (FoundLine == null)
+                throw new ArgumentException("tag does not exist", nameof(tag));
+            if (FoundLine.Fields[Location].Value == newValue)
                 return;
+            int NewValueLength = GetStringLength(newValue);
+            int OldValueLength = GetStringLength(FoundLine.Fields[Location].Value);
+            int y = FoundLine.y;
+            //长度相同的话只做替换处理,如果不同的话就要把后面全拆了
+            if (NewValueLength==OldValueLength)
+            {
+                WriteAt(newValue, FoundLine.Fields[Location].StartLocation, FoundLine.y);
+                return;
+            }
+            else
+            {
+                for (int i = Location; i < FoundLine.Fields.Count; i++)
+                {
+                    if (FoundLine.Fields[i].Length == i)
+                        FoundLine.Fields[i].Length = NewValueLength;
+                    else
+                        FoundLine.Fields[i].Length = GetStringLength(FoundLine.Fields[i].Value);
+
+                    FoundLine.Fields[i].StartLocation = FoundLine.Fields[i - 1].EndLocation;
+                    FoundLine.Fields[i].EndLocation = FoundLine.Fields[i].StartLocation + FoundLine.Fields[i].Length;
+                }
+                for (int i = Location+1; i < FoundLine.Fields.Count; i++)
+                {
+                    WriteAt(FoundLine.Fields[i].Value, FoundLine.Fields[i].StartLocation,y);
+                }
+                WriteAt(newValue, FoundLine.Fields[Location].StartLocation, FoundLine.y);
+                WriteWhiteSpaceAt(10, FoundLine.Fields[FoundLine.Fields.Count - 1].EndLocation, y);
+            }
+            FoundLine.Fields[Location].Value = newValue;
+
         }
         public static void WriteWhiteSpaceAt(int length,int start_x, int start_y)
         {
