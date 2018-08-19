@@ -11,6 +11,8 @@ namespace PlayersMonitor
     
     class Program
     {
+
+        public static readonly Version ProgromVersion = new Version("1.0.0");
         public static Configuration Config;
         public static PlayersManager PlayersManager;
         private delegate PingReply Run();
@@ -69,7 +71,7 @@ namespace PlayersMonitor
             {
                 PingReply PingResult = ExceptionHandler(Ping.Send);
                 float? Time = PingResult.Time / 10000.0f;
-                Console.Title = Settings.TitleStyle.
+                Console.Title = Config.TitleStyle.
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
                     Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{~(new Random().Next(1,233))-1}");
