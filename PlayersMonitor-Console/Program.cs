@@ -15,7 +15,7 @@ namespace PlayersMonitor
         public static PlayersManager PlayersManager;
         private delegate PingReply Run();
         private static Statuses Status ;
-        private static bool FirstPrint = true;
+        private static bool IsFirstPrint = true;
         private static bool IsWindows = false;
         enum Statuses
         {
@@ -65,32 +65,29 @@ namespace PlayersMonitor
             while (Status == Statuses.Monitor)
             {
                 PingReply PingResult = ExceptionHandler(Ping.Send);
+                float? Time = PingResult.Time / 10000.0f;
                 Console.Title = Settings.TitleStyle.
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
-                    Replace("$PING_TIME", ((float)(PingResult.Time / 10000.0f)).ToString("F2"));
-                if (FirstPrint == true)
+                    Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{~(new Random().Next(1,233))-1}");
+                if (IsFirstPrint == true)
                 {
                     Screen.Clear();
                     Tag_S = Screen.CreateLine("服务端版本:", "");
                     Tag_C = Screen.CreateLine("在线人数:", "");
-                    FirstPrint = false;
+                    IsFirstPrint = false;
                 }
-                Screen.ReviseLineField(GetServerVersionNameColor(PingResult.Version.Name), 1, Tag_S);
+                Screen.ReviseLineField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§','&')), 1, Tag_S);
                 Screen.ReviseLineField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_C);
                 if (PingResult.Player.Samples!=null)
                 {
                     foreach (var player in PingResult.Player.Samples)
                     {
-                        PlayersManager.Add(player.Name, Guid.Parse(player.Id));
+                        PlayersManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
                     }
-                    PlayersManager.LifeTimer();
                 }
-                else
-                {
                     PlayersManager.LifeTimer();
-                }
-                Thread.Sleep(Config.SleepTime+new Random().Next(0,128));
+                Thread.Sleep(Config.SleepTime+new Random().Next(0,256));
             }
             return;
         }
@@ -202,7 +199,7 @@ namespace PlayersMonitor
                 {
                     Console.Clear();
                     Console.Title = "发生了网路错误...";
-                    FirstPrint = true;
+                    IsFirstPrint = true;
                     if (e.ErrorCode==(int)SocketError.HostNotFound)
                     {
                         //我没找到linux上这个错误的错误代码...

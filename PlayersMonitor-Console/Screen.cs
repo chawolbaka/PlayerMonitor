@@ -119,8 +119,6 @@ namespace PlayersMonitor
             Lines.Clear();
             Console.Clear();
         }
-
-
         private static void WriteAt(string s, int x, int y)
         {
             int buff_top = Console.CursorTop;
@@ -151,33 +149,37 @@ namespace PlayersMonitor
         {
             for (int i = 0; i < s.Length; i++)
             {
-                if (s[i]=='&')
+                if (s[i] == '&')
                 {
                     switch (s[i + 1])
                     {
-                        case '0': Console.ForegroundColor = ConsoleColor.Black; i += 2; break; 
-                        case '1': Console.ForegroundColor = ConsoleColor.DarkBlue; i += 2; break;
-                        case '2': Console.ForegroundColor = ConsoleColor.DarkGreen; i += 2; break;
-                        case '3': Console.ForegroundColor = ConsoleColor.DarkCyan; i += 2; break;
-                        case '4': Console.ForegroundColor = ConsoleColor.DarkRed; i += 2; break;
-                        case '5': Console.ForegroundColor = ConsoleColor.DarkMagenta; i += 2; break;
-                        case '6': Console.ForegroundColor = ConsoleColor.DarkYellow; i += 2; break;
-                        case '7': Console.ForegroundColor = ConsoleColor.Gray; i += 2; break;
-                        case '8': Console.ForegroundColor = ConsoleColor.DarkGray; i += 2; break;
-                        case '9': Console.ForegroundColor = ConsoleColor.Blue; i += 2; break;
-                        case 'a': Console.ForegroundColor = ConsoleColor.Green; i += 2; break;
-                        case 'b': Console.ForegroundColor = ConsoleColor.Cyan; i += 2; break;
-                        case 'c': Console.ForegroundColor = ConsoleColor.Red; i += 2; break;
-                        case 'd': Console.ForegroundColor = ConsoleColor.Magenta; i += 2; break;
-                        case 'e': Console.ForegroundColor = ConsoleColor.Yellow; i += 2; break;
-                        case 'f': Console.ForegroundColor = ConsoleColor.White; i += 2; break;
-                        case 'r': Console.ResetColor(); i += 2; break;
+                        case '0': Console.ForegroundColor = ConsoleColor.Black; i++; continue;
+                        case '1': Console.ForegroundColor = ConsoleColor.DarkBlue; i++; continue;
+                        case '2': Console.ForegroundColor = ConsoleColor.DarkGreen; i++; continue;
+                        case '3': Console.ForegroundColor = ConsoleColor.DarkCyan; i++; continue;
+                        case '4': Console.ForegroundColor = ConsoleColor.DarkRed; i++; continue;
+                        case '5': Console.ForegroundColor = ConsoleColor.DarkMagenta; i++; continue;
+                        case '6': Console.ForegroundColor = ConsoleColor.DarkYellow; i++; continue;
+                        case '7': Console.ForegroundColor = ConsoleColor.Gray; i++; continue;
+                        case '8': Console.ForegroundColor = ConsoleColor.DarkGray; i++; continue;
+                        case '9': Console.ForegroundColor = ConsoleColor.Blue; i++; continue;
+                        case 'a': Console.ForegroundColor = ConsoleColor.Green; i++; continue;
+                        case 'b': Console.ForegroundColor = ConsoleColor.Cyan; i++; continue;
+                        case 'c': Console.ForegroundColor = ConsoleColor.Red; i++; continue;
+                        case 'd': Console.ForegroundColor = ConsoleColor.Magenta; i++; continue;
+                        case 'e': Console.ForegroundColor = ConsoleColor.Yellow; i++; continue;
+                        case 'f': Console.ForegroundColor = ConsoleColor.White; i++; continue;
+                        case 'r': Console.ResetColor(); i++; continue;
+                        //样式代码直接丢掉
+                        case 'k': i++; continue;
+                        case 'l': i++; continue;
+                        case 'm': i++; continue;
+                        case 'n': i++; continue;
+                        case 'o': i++; continue;
                     }
                 }
-                if (i >= s.Length)
-                    break;
                 Console.Write(s[i]);
-                
+                if (i >= s.Length) break;
             }
             if (line == true)
                 Console.WriteLine();

@@ -14,35 +14,38 @@ namespace PlayersMonitor
         public event PlayerDisconnectedEvntHandler PlayerDisconnectedEvent;
         public event PlayerJoinedEvntHandler PlayerJoinedEvnt;
 
+
+        public bool? IsOnlineMode;
+
         private Configuration Config;
         private List<Player> PlayersList = new List<Player>();
-        public bool? IsOnlineMode;
+
         public PlayersManager(Configuration config)
         {
             Config = config ?? throw new ArgumentNullException(nameof(config));
         }
         public void Add(string name, Guid uuid)
         {
-            int DefPlayerBlood = PlayersList.Count < 12 ? 2 : Config.Blood;
+            int DefPlayerBlood = PlayersList.Count < 12 ? 2 : Config.Blood; 
             if (Config == null)
                 throw new Exception("Not Initializtion");
             Player FoundPlayer = PlayersList.Find(x => x.Uuid.ToString().Replace("-","") == uuid.ToString().Replace("-", ""));
             if (FoundPlayer != null) //如果找到了这个玩家就把它的血恢复到默认值(回血)
             {
                 FoundPlayer.Blood = DefPlayerBlood;
+                //Screen.ReviseLineField($"{GetBloodColor(FoundPlayer.Blood,Config.Blood)}{FoundPlayer.Blood.ToString("D2")}",3,FoundPlayer.ScreenTag);
             }
             else if (FoundPlayer == null)
             {
-                Player NewPlayer = new Player(name, new Guid(uuid.ToString()), DefPlayerBlood);
-                if (PlayersList.Count == 0)
-                {
+                Player NewPlayer = new Player(name, Guid.Parse(uuid.ToString()), DefPlayerBlood);
+                if (PlayersList.Count == 0) {
                     Thread t = new Thread(iom => IsOnlineMode = NewPlayer.IsOnlineMode());
                     t.Start();
                 }
 
                 //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
                 NewPlayer.ScreenTag = Screen.CreateLine(
-                    "[", (PlayersList.Count + 1).ToString("D2"), "/", $"&a{(NewPlayer.Blood-1).ToString("D2")}", "]",
+                    "[", (PlayersList.Count + 1).ToString("D2"), "/", $"{GetBloodColor(NewPlayer.Blood-1, Config.Blood)}{(NewPlayer.Blood-1).ToString("D2")}", "]",
                     "Name:", NewPlayer.Name, "(", NewPlayer.Uuid.ToString(), ")");
                 PlayersList.Add(NewPlayer);
                 PlayerJoinedEvnt?.Invoke(NewPlayer);
@@ -54,6 +57,8 @@ namespace PlayersMonitor
             for (int i = 0; i < PlayersList.Count; i++)
             {
                 PlayersList[i].Blood--;
+                Screen.ReviseLineField(
+                    $"{GetBloodColor(PlayersList[i].Blood, Config.Blood)}{PlayersList[i].Blood.ToString("D2")}", 3, PlayersList[i].ScreenTag);
                 if (PlayersList[i].Blood ==0)
                 {
                     if (PlayersList.Count>1)
@@ -73,6 +78,23 @@ namespace PlayersMonitor
                     PlayerDisconnectedEvent?.Invoke(PlayersList[i]);
                 }
             }
+        }
+        private void RestoreHealthForAllPlayer(int? blood=null)
+        {
+            foreach (var Player in PlayersList)
+            {
+                Player.Blood = blood ?? Config.Blood;
+                Screen.ReviseLineField($"&a{Player.Blood.ToString("D2")}", 3, Player.ScreenTag);
+            }
+        }
+        private string GetBloodColor(int nowBlood,int maxBlood)
+        {
+            if (nowBlood <= 1 || nowBlood <= maxBlood / 100.0f * 30)
+                return "&c";
+            else if (nowBlood <= maxBlood / 100.0f * 48)
+                return "&e";
+            else
+                return "&a";
         }
         public class Player
         {
