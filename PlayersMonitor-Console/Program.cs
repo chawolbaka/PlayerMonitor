@@ -29,6 +29,7 @@ namespace PlayersMonitor
             Status = Statuses.Initializing;
             Initializa();
 
+
             Ping ping = new Ping(Config.ServerHost, Config.ServerPort);
             Status = Statuses.Monitor;
             Thread PrintThread =  new Thread(StartPrintInfo);
@@ -79,17 +80,17 @@ namespace PlayersMonitor
                 Screen.ReviseLineField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_C);
                 if (PingResult.Player.Samples!=null)
                 {
-                
                     foreach (var player in PingResult.Player.Samples)
                     {
                         PlayersManager.Add(player.Name, Guid.Parse(player.Id));
                     }
+                    PlayersManager.LifeTimer();
                 }
                 else
                 {
                     PlayersManager.LifeTimer();
                 }
-                Thread.Sleep(Config.SleepTime / 2);
+                Thread.Sleep(Config.SleepTime+new Random().Next(0,128));
             }
             return;
         }

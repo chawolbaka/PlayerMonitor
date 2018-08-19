@@ -26,14 +26,14 @@ namespace PlayersMonitor
             int DefPlayerBlood = PlayersList.Count < 12 ? 2 : Config.Blood;
             if (Config == null)
                 throw new Exception("Not Initializtion");
-            Player FoundPlayer = PlayersList.Find(x => x.Uuid.ToString() == uuid.ToString());
+            Player FoundPlayer = PlayersList.Find(x => x.Uuid.ToString().Replace("-","") == uuid.ToString().Replace("-", ""));
             if (FoundPlayer != null) //如果找到了这个玩家就把它的血恢复到默认值(回血)
             {
                 FoundPlayer.Blood = DefPlayerBlood;
             }
             else if (FoundPlayer == null)
             {
-                Player NewPlayer = new Player(name, uuid, DefPlayerBlood);
+                Player NewPlayer = new Player(name, new Guid(uuid.ToString()), DefPlayerBlood);
                 if (PlayersList.Count == 0)
                 {
                     Thread t = new Thread(iom => IsOnlineMode = NewPlayer.IsOnlineMode());
@@ -42,20 +42,19 @@ namespace PlayersMonitor
 
                 //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
                 NewPlayer.ScreenTag = Screen.CreateLine(
-                    "[", PlayersList.Count + 1.ToString(), "/", $"&a{(NewPlayer.Blood-1).ToString("D2")}", "]",
+                    "[", (PlayersList.Count + 1).ToString("D2"), "/", $"&a{(NewPlayer.Blood-1).ToString("D2")}", "]",
                     "Name:", NewPlayer.Name, "(", NewPlayer.Uuid.ToString(), ")");
                 PlayersList.Add(NewPlayer);
                 PlayerJoinedEvnt?.Invoke(NewPlayer);
             }
-            LifeTimer();
-            //还剩下把玩家列表画上去这个类就差不多写完了
+            //LifeTimer();
         }
         public void LifeTimer()
         {
             for (int i = 0; i < PlayersList.Count; i++)
             {
                 PlayersList[i].Blood--;
-                if (PlayersList[i].Blood <= 0)
+                if (PlayersList[i].Blood ==0)
                 {
                     if (PlayersList.Count>1)
                     {
