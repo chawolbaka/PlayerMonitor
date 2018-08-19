@@ -57,25 +57,29 @@ namespace PlayersMonitor
             for (int i = 0; i < PlayersList.Count; i++)
             {
                 PlayersList[i].Blood--;
-                Screen.ReviseLineField(
-                    $"{GetBloodColor(PlayersList[i].Blood, Config.Blood)}{PlayersList[i].Blood.ToString("D2")}", 3, PlayersList[i].ScreenTag);
-                if (PlayersList[i].Blood ==0)
+
+                if (PlayersList[i].Blood == 0)
                 {
-                    if (PlayersList.Count>1)
+                    if (PlayersList.Count > 1)
                     {
-                        Screen.RemoveLine(PlayersList[i].ScreenTag);
+                        Screen.RemoveLine(PlayersList[i].ScreenTag, true);
                         PlayersList.Remove(PlayersList[i]);
-                        for (int j = i; j < PlayersList.Count; j++)
+                        for (int j = 0; j < PlayersList.Count; j++)
                         {
-                            Screen.ReviseLineField(j.ToString("D2"), 1, PlayersList[j].ScreenTag);
+                            Screen.ReviseLineField((j+1).ToString("D2"), 1, PlayersList[j].ScreenTag);
                         }
                     }
                     else
                     {
-                        Screen.RemoveLine(PlayersList[i].ScreenTag,true);
+                        Screen.RemoveLine(PlayersList[i].ScreenTag, true);
                         PlayersList.Remove(PlayersList[i]);
                     }
                     PlayerDisconnectedEvent?.Invoke(PlayersList[i]);
+                }
+                else
+                {
+                    Screen.ReviseLineField(
+                        $"{GetBloodColor(PlayersList[i].Blood, Config.Blood)}{PlayersList[i].Blood.ToString("D2")}", 3, PlayersList[i].ScreenTag);
                 }
             }
         }

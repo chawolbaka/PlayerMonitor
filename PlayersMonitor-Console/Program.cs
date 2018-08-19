@@ -28,6 +28,9 @@ namespace PlayersMonitor
         {
             Status = Statuses.Initializing;
             Initializa();
+            //Test Server
+            Config.ServerHost = "ff.kuniu.net";
+            Config.ServerPort = 25672;
 
 
             Ping ping = new Ping(Config.ServerHost, Config.ServerPort);
