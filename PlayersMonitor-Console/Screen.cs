@@ -44,27 +44,27 @@ namespace PlayersMonitor
             Console.WriteLine();
             return NewLine.Tag;
         }
-        public static void ReviseLineField(string newValue,int Location, string tag)
+        public static void ReviseField(string newValue,int location, string tag)
         {
             Line FoundLine = Lines.Find(x => x.Tag == tag);
             if (FoundLine == null)
                 throw new ArgumentException("Tag does not exist", nameof(tag));
-            if (FoundLine.Fields[Location].Value == newValue)
+            if (FoundLine.Fields[location].Value == newValue)
                 return;
             int NewValueLength = GetStringLength(newValue);
-            int OldValueLength = GetStringLength(FoundLine.Fields[Location].Value);
+            int OldValueLength = GetStringLength(FoundLine.Fields[location].Value);
             int y = FoundLine.y;
             //长度相同的话只做替换处理,如果不同的话就要重新计算长度然后把后面的全拆了QAQ
             if (NewValueLength == OldValueLength)
             {
-                WriteAt(newValue, FoundLine.Fields[Location].StartLocation, FoundLine.y);
+                WriteAt(newValue, FoundLine.Fields[location].StartLocation, FoundLine.y);
             }
             else
             {
                 //重新计算长度
-                for (int i = Location; i < FoundLine.Fields.Count; i++)
+                for (int i = location; i < FoundLine.Fields.Count; i++)
                 {
-                    if (i == Location)
+                    if (i == location)
                         FoundLine.Fields[i].Length = NewValueLength;
                     else
                         FoundLine.Fields[i].Length = GetStringLength(FoundLine.Fields[i].Value);
@@ -73,9 +73,9 @@ namespace PlayersMonitor
                     FoundLine.Fields[i].EndLocation = FoundLine.Fields[i].StartLocation + FoundLine.Fields[i].Length;
                 }
                 //把新的内容输出到控制台上
-                WriteAt(newValue, FoundLine.Fields[Location].StartLocation, FoundLine.y);
+                WriteAt(newValue, FoundLine.Fields[location].StartLocation, FoundLine.y);
                 //重新输出一下后面的那些字段
-                for (int i = Location + 1; i < FoundLine.Fields.Count; i++)
+                for (int i = location + 1; i < FoundLine.Fields.Count; i++)
                 {
                     WriteAt(FoundLine.Fields[i].Value, FoundLine.Fields[i].StartLocation, y);
                 }
@@ -83,7 +83,7 @@ namespace PlayersMonitor
                 int ClearLength = Console.BufferWidth - FoundLine.Fields[FoundLine.Fields.Count - 1].EndLocation;
                 WriteWhiteSpaceAt(ClearLength, FoundLine.Fields[FoundLine.Fields.Count - 1].EndLocation, y);
             }
-            FoundLine.Fields[Location].Value = newValue;
+            FoundLine.Fields[location].Value = newValue;
         }
         public static void RemoveLine(string tag,bool rePirint=false)
         {
@@ -119,6 +119,8 @@ namespace PlayersMonitor
             Lines.Clear();
             Console.Clear();
         }
+
+
         private static void WriteAt(string s, int x, int y)
         {
             int buff_top = Console.CursorTop;

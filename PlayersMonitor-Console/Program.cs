@@ -15,92 +15,25 @@ namespace PlayersMonitor
         public static readonly Version ProgromVersion = new Version("1.0.0");
         public static Configuration Config;
         public static PlayersManager PlayersManager;
-        private delegate PingReply Run();
-        private static Statuses Status ;
-        private static bool IsFirstPrint = true;
         private static bool IsWindows = false;
-        enum Statuses
-        {
-            Initializing,
-            Monitor,
-            ShowAllInfo
-        }
 
         static void Main(string[] args)
         {
-            Status = Statuses.Initializing;
             Initializa();
-            //Test Server
-            Config.ServerHost = "ff.kuniu.net";
-            Config.ServerPort = 25672;
 
+            Modes.MonitorPlayer Monitor = new Modes.MonitorPlayer(Config,PlayersManager);
+            Monitor.Start();
 
-            Ping ping = new Ping(Config.ServerHost, Config.ServerPort);
-            Status = Statuses.Monitor;
-            Thread PrintThread =  new Thread(StartPrintInfo);
-            PrintThread.Start(ping);
             while (true)
             {
                 ConsoleKeyInfo Input = Console.ReadKey(true);
-                if (Input.Key==ConsoleKey.A&&Status==Statuses.Monitor&&false)
-                {
-                    Status =  Statuses.ShowAllInfo;
-                    //必须等线程结束才能继续,那么问题来啦.我怎么不用死循环来知道线程是不是结束了?
-                    Thread.Sleep(Config.SleepTime + 30);
-                    if (PrintThread.IsAlive == false)
-                    {
-                        PrintAllInfo(ping);
-                        Console.ReadKey();
-                        Status = Statuses.Monitor;
-                        PrintThread = new Thread(StartPrintInfo);
-                        PrintThread.Start();
-                    }
-                }
-                else if (Input.Key == ConsoleKey.Q || Input.Key == ConsoleKey.Escape)
+                if (Input.Key == ConsoleKey.Q || Input.Key == ConsoleKey.Escape)
                 {
                     Console.CursorVisible = true;
                     Environment.Exit(0);
                 }
             }
-        }
-        static void StartPrintInfo(object obj)
-        {
-            Ping Ping = obj as Ping;
-            string Tag_S = "", Tag_C = "";
-            while (Status == Statuses.Monitor)
-            {
-                PingReply PingResult = ExceptionHandler(Ping.Send);
-                float? Time = PingResult.Time / 10000.0f;
-                Console.Title = Config.TitleStyle.
-                    Replace("$IP", Config.ServerHost).
-                    Replace("$PORT", Config.ServerPort.ToString()).
-                    Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{~(new Random().Next(1,233))-1}");
-                if (IsFirstPrint == true)
-                {
-                    Screen.Clear();
-                    Tag_S = Screen.CreateLine("服务端版本:", "");
-                    Tag_C = Screen.CreateLine("在线人数:", "");
-                    IsFirstPrint = false;
-                }
-                Screen.ReviseLineField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§','&')), 1, Tag_S);
-                Screen.ReviseLineField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_C);
-                if (PingResult.Player.Samples!=null)
-                {
-                    foreach (var player in PingResult.Player.Samples)
-                    {
-                        PlayersManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
-                    }
-                }
-                    PlayersManager.LifeTimer();
-                Thread.Sleep(Config.SleepTime+new Random().Next(0,256));
-            }
-            return;
-        }
-        static void PrintAllInfo(Ping ping)
-        {
-            Screen.Clear();
-            var result = ping.Send();
-            Console.WriteLine($"服务端版本:{result.Version.Name}({result.Version.Protocol})");
+            
         }
         static void Initializa()
         {
@@ -173,86 +106,7 @@ namespace PlayersMonitor
             Screen.Clear();
             PlayersManager = new PlayersManager(Config);
         }
-        static string GetServerVersionNameColor(string serverVersionName)
-        {
-            //绿色代表支持显示玩家,黄色代表未知,红色代表不支持(不精确,可能哪天突然这个服务端就不支持了)
 
-            if (serverVersionName.ToLower().Contains("spigot"))
-                return $"&a{serverVersionName}";
-            else if (serverVersionName.ToLower().Contains("thermos"))
-                return $"&c{serverVersionName}";
-            else if (serverVersionName.ToLower().Contains("bungeecord"))
-                return $"&c{serverVersionName}";
-            else
-                return $"&e{serverVersionName}";
-        }
-        static PingReply ExceptionHandler(Run run)
-        {
-            DateTime? FirstTime=null;
-            int RetryTime=1000*8;
-            int TryTick = 0;
-            while (true)
-            {
-                try
-                {
-                    PingReply tmp = run();
-                    FirstTime = null;
-                    TryTick = 0;
-                    return tmp;
-                }
-                catch(SocketException e)
-                {
-                    Console.Clear();
-                    Console.Title = "发生了网路错误...";
-                    IsFirstPrint = true;
-                    if (e.ErrorCode==(int)SocketError.HostNotFound)
-                    {
-                        //我没找到linux上这个错误的错误代码...
-                        Console.BackgroundColor = ConsoleColor.Red;
-                        Console.WriteLine("服务器地址错误(找不到这个地址)");
-                        if (IsWindows==true)
-                            Console.ReadKey(true);
-                        Environment.Exit(-1);
-                    }
-                    else
-                    {
-                        if (FirstTime == null)
-                        {
-                            FirstTime = DateTime.Now;
-                            Console.WriteLine($"Time:{FirstTime.ToString()}");
-                            Console.WriteLine($"ErrorMessage:{e.Message}(ErrorCode:{e.ErrorCode})");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"首次发生错误的时间:{FirstTime.ToString()}");
-                            Console.WriteLine($"本次发生错误的时间:{DateTime.Now.ToString()}");
-                            Console.WriteLine($"错误信息:{e.Message}(错误代码:{e.ErrorCode})");
-                        }
-                        if (TryTick == 0)
-                            Console.WriteLine($"将在{(RetryTime / 1000.0f).ToString("F2")}秒后重试");
-                        else if (TryTick > ushort.MaxValue)
-                        {
-                            Console.WriteLine($"已到达最大重试次数({ushort.MaxValue})");
-                            if (IsWindows == true)
-                                Console.ReadKey(true);
-                            Environment.Exit(-1);
-                        }
-                        else
-                            Console.WriteLine($"将在{(RetryTime / 1000.0f).ToString("F2")}秒后重试(已重试{TryTick}次)");
-                        TryTick++;
-                        Thread.Sleep(RetryTime);
-                        continue;
-                    }
-                }
-                catch (Exception)
-                {
-                    Console.Clear();
-                    Console.Title = "Error";
-                    Console.WriteLine($"Time:{DateTime.Now.ToString()}");
-                    throw;
-                }
-            }
-        }
         
     }
 }

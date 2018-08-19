@@ -13,6 +13,8 @@ namespace PlayersMonitor
         public int SleepTime { get; set; } = 1500;
         public int Blood { get; set; } = 8;
         public bool AutoSetBlood { get; set; } = false;
+        public string RunCommandForPlayerJoin { get; } =null;
+        public string RunCommandForPlayerDisconnected { get; } = null;
 
         public Configuration()
         {
@@ -63,9 +65,13 @@ namespace PlayersMonitor
                 {
                     TitleStyle = args[i + 1];
                 }
-                else if (args[i] == "--title-style" && args.Length >= i + 1)
+                else if (args[i] == "-r"|| args[i].ToLower() == "--run-joined" && args.Length >= i + 1)
                 {
-
+                    RunCommandForPlayerJoin = args[i + 1];
+                }
+                else if (args[i].ToLower() == "--run-disconnected" && args.Length >= i + 1)
+                {
+                    RunCommandForPlayerDisconnected = args[i + 1];
                 }
             }
         }

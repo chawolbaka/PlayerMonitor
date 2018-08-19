@@ -66,7 +66,7 @@ namespace PlayersMonitor
                         PlayersList.Remove(PlayersList[i]);
                         for (int j = 0; j < PlayersList.Count; j++)
                         {
-                            Screen.ReviseLineField((j+1).ToString("D2"), 1, PlayersList[j].ScreenTag);
+                            Screen.ReviseField((j+1).ToString("D2"), 1, PlayersList[j].ScreenTag);
                         }
                     }
                     else
@@ -78,7 +78,7 @@ namespace PlayersMonitor
                 }
                 else
                 {
-                    Screen.ReviseLineField(
+                    Screen.ReviseField(
                         $"{GetBloodColor(PlayersList[i].Blood, Config.Blood)}{PlayersList[i].Blood.ToString("D2")}", 3, PlayersList[i].ScreenTag);
                 }
             }
@@ -88,7 +88,7 @@ namespace PlayersMonitor
             foreach (var Player in PlayersList)
             {
                 Player.Blood = blood ?? Config.Blood;
-                Screen.ReviseLineField($"&a{Player.Blood.ToString("D2")}", 3, Player.ScreenTag);
+                Screen.ReviseField($"&a{Player.Blood.ToString("D2")}", 3, Player.ScreenTag);
             }
         }
         private string GetBloodColor(int nowBlood,int maxBlood)
