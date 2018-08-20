@@ -5,6 +5,7 @@ using MinecraftProtocol.Utils;
 using MinecraftProtocol.DataType;
 using System.Runtime.InteropServices;
 using System.Drawing;
+using System.IO;
 
 namespace PlayersMonitor.Modes
 {
@@ -50,7 +51,7 @@ namespace PlayersMonitor.Modes
                 Console.Title = Config.TitleStyle.
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
-                    Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{~(new Random().Next(1, 233)) - 1}");
+                    Replace("$PING_TIME",Time!=null?((float)Time).ToString("F2"):$"{(~new Random().Next(1, 233))+1}");
                 if (IsFirstPrint == true)
                 {
                     Screen.Clear();
@@ -59,8 +60,17 @@ namespace PlayersMonitor.Modes
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true &&
                         !string.IsNullOrWhiteSpace(PingResult.Icon))
                     {
-                        //.net core不支持... 
-                        //我在使用.net编译前把代码加上去吧...
+                        byte[] Icon_bytes = Convert.FromBase64String(
+                            PingResult.Icon.Replace("data:image/png;base64,", ""));
+                        using (MemoryStream ms = new MemoryStream(Icon_bytes))
+                        {
+                            try {
+                                Bitmap Icon = new Bitmap(ms);
+                                //不知道为什么好像用不了,可能.net core不支持这个东西?
+                                //(到时候编译.net 版本的看看有不有效果吧,没有的话就删除这个功能)
+                                WinAPI.SetConsoleIcon(Icon.GetHicon());
+                            } catch { throw; }
+                        }
                     }
                     IsFirstPrint = false;
                 }

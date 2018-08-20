@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.IO;
 
 namespace PlayersMonitor
 {
@@ -9,15 +12,19 @@ namespace PlayersMonitor
     {
 
         public static readonly Version ProgromVersion = new Version("1.0.0");
-        public static Configuration Config;
-        public static PlayersManager PlayersManager;
+
+        private static Configuration Config;
+        private static PlayersManager PlayerManager;
         private static bool IsWindows = false;
+        private static readonly string ConfigFilePath = "Config.xml";
 
         static void Main(string[] args)
         {
             Initializa();
 
-            Modes.MonitorPlayer Monitor = new Modes.MonitorPlayer(Config,PlayersManager);
+			
+			
+            Modes.MonitorPlayer Monitor = new Modes.MonitorPlayer(Config,PlayerManager);
             Monitor.StartAsync();
 
             while (true)
@@ -33,11 +40,47 @@ namespace PlayersMonitor
         }
         static void Initializa()
         {
-            Config = Configuration.Load(Environment.GetCommandLineArgs());
+            IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             Console.InputEncoding = Encoding.UTF8;
             Console.OutputEncoding = Encoding.UTF8;
-            IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-#if (DEBUG == false)
+            if (Environment.GetCommandLineArgs().Length == 0)
+            {
+                //寻找配置文件,如果没找到就启动设置向导,并询问用户是否保存配置
+                if(File.Exists(ConfigFilePath))
+                {
+                    //Config = Configuration.Load(ConfigFilePath);
+                }
+            }
+            else {
+                Config = Configuration.Load(Environment.GetCommandLineArgs());
+            }
+            PlayerManager = new PlayersManager(Config);
+            if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerJoin))
+            {
+                PlayerManager.PlayerJoinedEvnt += player =>
+                {
+                    string reg = @"(\S+)\s(\S+)";
+                    ProcessStartInfo StartInfo = new ProcessStartInfo();
+                    StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerJoin, reg, "$1");
+                    if (Config.RunCommandForPlayerJoin.Contains(" "))
+                        StartInfo.Arguments = Regex.Replace(Config.RunCommandForPlayerJoin, reg, "$2");
+                    Process.Start(StartInfo);
+                };
+            }
+            if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerDisconnected))
+            {
+                PlayerManager.PlayerJoinedEvnt += player =>
+                {
+                    string reg = @"(\S+)\s(\S+)";
+                    ProcessStartInfo StartInfo = new ProcessStartInfo();
+                    StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerDisconnected, reg, "$1");
+                    if (Config.RunCommandForPlayerDisconnected.Contains(" "))
+                        StartInfo.Arguments = Regex.Replace(Config.RunCommandForPlayerDisconnected, reg, "$2");
+                    Process.Start(StartInfo);
+                };
+            }
+            //这东西有点碍事,所以只在发布的时候出现吧
+            #if (DEBUG == false)
             if (string.IsNullOrWhiteSpace(Config.ServerHost))
             {
                 Console.Write("服务器地址:");
@@ -100,7 +143,6 @@ namespace PlayersMonitor
             }
 #endif
             Screen.Clear();
-            PlayersManager = new PlayersManager(Config);
         }
 
         
