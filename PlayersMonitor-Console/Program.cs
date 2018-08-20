@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Text;
-using System.Threading;
-using System.Net.Sockets;
-using MinecraftProtocol.Utils;
-using MinecraftProtocol.DataType;
 using System.Runtime.InteropServices;
 
 namespace PlayersMonitor
@@ -22,7 +18,7 @@ namespace PlayersMonitor
             Initializa();
 
             Modes.MonitorPlayer Monitor = new Modes.MonitorPlayer(Config,PlayersManager);
-            Monitor.Start();
+            Monitor.StartAsync();
 
             while (true)
             {

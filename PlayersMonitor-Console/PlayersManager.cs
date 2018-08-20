@@ -93,6 +93,8 @@ namespace PlayersMonitor
         }
         private string GetBloodColor(int nowBlood,int maxBlood)
         {
+            if (PlayersList.Count <= 12)
+                return "&a";
             if (nowBlood <= 1 || nowBlood <= maxBlood / 100.0f * 30)
                 return "&c";
             else if (nowBlood <= maxBlood / 100.0f * 48)

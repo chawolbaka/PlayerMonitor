@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MinecraftProtocol.Utils;
-using MinecraftProtocol.DataType;
 using System.Threading;
 using System.Net.Sockets;
+using MinecraftProtocol.Utils;
+using MinecraftProtocol.DataType;
 using System.Runtime.InteropServices;
+using System.Drawing;
 
 namespace PlayersMonitor.Modes
 {
@@ -15,7 +14,6 @@ namespace PlayersMonitor.Modes
         private Configuration Config;
         private PlayersManager PlayerManager;
         private static bool IsFirstPrint = true;
-        private Thread PrintThread;
         private Ping ping;
 
         public MonitorPlayer(Configuration config, PlayersManager manager)
@@ -25,21 +23,22 @@ namespace PlayersMonitor.Modes
             PlayerManager = manager != null ? manager : throw new ArgumentNullException(nameof(manager));
             ping = new Ping(Config.ServerHost, Config.ServerPort);
         }
-        public void Start(bool useThread=true)
+        public void Start()
         {
             Status = Statuses.Running;
-            if (useThread == true) {
-                Thread PrintThread = new Thread(StartPrintInfo);
-                PrintThread.Start(ping);
-            }
-            else {
-                StartPrintInfo(ping);
-            }
+            StartPrintInfo(ping);
+        }
+        public void StartAsync()
+        {
+            Status = Statuses.Running;
+            Thread PrintThread = new Thread(StartPrintInfo);
+            PrintThread.Start(ping);
         }
         public void Abort()
         {
             Status = Statuses.Abort;
         }
+
         private void StartPrintInfo(object obj)
         {
             Ping Ping = obj as Ping;
@@ -57,6 +56,12 @@ namespace PlayersMonitor.Modes
                     Screen.Clear();
                     Tag_S = Screen.CreateLine("服务端版本:", "");
                     Tag_C = Screen.CreateLine("在线人数:", "");
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true &&
+                        !string.IsNullOrWhiteSpace(PingResult.Icon))
+                    {
+                        //.net core不支持... 
+                        //我在使用.net编译前把代码加上去吧...
+                    }
                     IsFirstPrint = false;
                 }
                 Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_S);
