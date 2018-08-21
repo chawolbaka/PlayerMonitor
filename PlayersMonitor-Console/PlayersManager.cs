@@ -60,19 +60,14 @@ namespace PlayersMonitor
 
                 if (PlayersList[i].Blood == 0)
                 {
+                    Screen.RemoveLine(PlayersList[i].ScreenTag, true);
+                    PlayersList.Remove(PlayersList[i]);
                     if (PlayersList.Count > 1)
                     {
-                        Screen.RemoveLine(PlayersList[i].ScreenTag, true);
-                        PlayersList.Remove(PlayersList[i]);
                         for (int j = 0; j < PlayersList.Count; j++)
                         {
                             Screen.ReviseField((j+1).ToString("D2"), 1, PlayersList[j].ScreenTag);
                         }
-                    }
-                    else
-                    {
-                        Screen.RemoveLine(PlayersList[i].ScreenTag, true);
-                        PlayersList.Remove(PlayersList[i]);
                     }
                     PlayerDisconnectedEvent?.Invoke(PlayersList[i]);
                 }

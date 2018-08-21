@@ -72,26 +72,26 @@ namespace PlayersMonitor
             {
                 PlayerManager.PlayerJoinedEvnt += player =>
                 {
-                    string reg = @"^(\S+) (.*)$";
+                    string reg = @"^(\S+)( (.*))?$";
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
                     StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerJoin, reg, "$1");
                     if (Config.RunCommandForPlayerJoin.Contains(" "))
                         StartInfo.Arguments = Regex
-                        .Replace(Config.RunCommandForPlayerJoin, reg, "$2")
+                        .Replace(Config.RunCommandForPlayerJoin, reg, "$3")
                         .Replace("$PLAYER_NAME", player.Name); ;
                     Process.Start(StartInfo);
                 };
             }
             if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerDisconnected))
             {
-                PlayerManager.PlayerJoinedEvnt += player =>
+                PlayerManager.PlayerDisconnectedEvent += player =>
                 {
-                    string reg = @"^(\S+) (.*)$";
+                    string reg = @"^(\S+)( (.*))?$";
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
                     StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerDisconnected, reg, "$1");
                     if (Config.RunCommandForPlayerDisconnected.Contains(" "))
                         StartInfo.Arguments = Regex
-                        .Replace(Config.RunCommandForPlayerDisconnected, reg, "$2")
+                        .Replace(Config.RunCommandForPlayerDisconnected, reg, "$3")
                         .Replace("$PLAYER_NAME",player.Name);
                     Process.Start(StartInfo);
                 };
