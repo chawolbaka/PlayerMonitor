@@ -57,7 +57,7 @@ namespace PlayersMonitor.Modes
                     Screen.Clear();
                     Tag_S = Screen.CreateLine("服务端版本:", "");
                     Tag_C = Screen.CreateLine("在线人数:", "");
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true &&
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true && 
                         !string.IsNullOrWhiteSpace(PingResult.Icon))
                     {
                         byte[] Icon_bytes = Convert.FromBase64String(

@@ -22,12 +22,16 @@ namespace PlayersMonitor
         {
             Initializa();
 
+            //Test Server
+            Config.ServerHost = "mc-sm.com";
+            Config.ServerPort = 23533;
 			
 			
             Modes.MonitorPlayer Monitor = new Modes.MonitorPlayer(Config,PlayerManager);
             Monitor.StartAsync();
 
-            while (true)
+            //Olny Windows Support this
+            while (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
             {
                 ConsoleKeyInfo Input = Console.ReadKey(true);
                 if (Input.Key == ConsoleKey.Q || Input.Key == ConsoleKey.Escape)
@@ -36,7 +40,6 @@ namespace PlayersMonitor
                     Environment.Exit(0);
                 }
             }
-            
         }
         static void Initializa()
         {
