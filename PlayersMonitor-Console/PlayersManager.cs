@@ -57,12 +57,12 @@ namespace PlayersMonitor
             for (int i = 0; i < PlayersList.Count; i++)
             {
                 PlayersList[i].Blood--;
-
+                
                 if (PlayersList[i].Blood == 0)
                 {
                     Player PlayerTmp = PlayersList[i];
                     Screen.RemoveLine(PlayersList[i].ScreenTag, true);
-                    PlayersList.Remove(PlayersList[i]);
+                    PlayersList.Remove(PlayersList[i--]);
                     if (PlayersList.Count > 1)
                     {
                         for (int j = 0; j < PlayersList.Count; j++)

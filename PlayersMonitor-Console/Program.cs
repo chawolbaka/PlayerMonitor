@@ -25,7 +25,7 @@ namespace PlayersMonitor
         static void Main(string[] args)
         {
             Initializa();
-            
+
             switch (Config.RunningMode)
             {
                 case Mode.Type.Chart:
