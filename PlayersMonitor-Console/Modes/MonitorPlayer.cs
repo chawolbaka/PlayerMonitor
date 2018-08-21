@@ -106,6 +106,7 @@ namespace PlayersMonitor.Modes
             DateTime? FirstTime = null;
             int RetryTime = 1000 * 6;
             int TryTick = 0;
+            int MaxTryTick = ushort.MaxValue;
             while (true)
             {
                 try
@@ -154,18 +155,26 @@ namespace PlayersMonitor.Modes
                         }
                         if (TryTick == 0)
                             Screen.Write($"将在&f{(RetryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");
-                        else if (TryTick < ushort.MaxValue) 
-                            Console.WriteLine($"&e已重试&r:&f{TryTick}次,{(RetryTime / 1000.0f).ToString("F2")}秒后将继续尝试去重新连接服务器");                        
+                        else if (TryTick < MaxTryTick) 
+                            Screen.WriteLine($"&e已重试&r:&f{TryTick}次,{(RetryTime / 1000.0f).ToString("F2")}秒后将继续尝试去重新连接服务器");                        
                         else {
-                            Console.WriteLine($"已到达最大重试次数({ushort.MaxValue})");
+                            Console.WriteLine($"已到达最大重试次数({MaxTryTick})");
                             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
                                 Console.ReadKey(true);
                             Environment.Exit(-1);
                         }
-                        
+
                         //随机重试时间
-                        RetryTime += new Random().Next(23, 2333*3);
-                        RetryTime -= new Random().Next(23, 2333*3);
+                        if (TryTick > MaxTryTick / 2)
+                        {
+                            RetryTime += new Random().Next(2333, 33333 * 3);
+                            RetryTime -= new Random().Next(233, 33333 * 3);
+                        }
+                        else
+                        {
+                            RetryTime += new Random().Next(233, 2333 * 3);
+                            RetryTime -= new Random().Next(23, 2333 * 3);
+                        }
                         if (RetryTime <= 1000)
                             RetryTime = 1000*6;
                         Thread.Sleep(RetryTime);
