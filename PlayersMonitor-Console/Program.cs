@@ -39,7 +39,6 @@ namespace PlayersMonitor
                     break;
             }
 
-
             //Olny Windows Support this
             while (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
             {
@@ -77,7 +76,9 @@ namespace PlayersMonitor
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
                     StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerJoin, reg, "$1");
                     if (Config.RunCommandForPlayerJoin.Contains(" "))
-                        StartInfo.Arguments = Regex.Replace(Config.RunCommandForPlayerJoin, reg, "$2");
+                        StartInfo.Arguments = Regex
+                        .Replace(Config.RunCommandForPlayerJoin, reg, "$2")
+                        .Replace("$PLAYER_NAME", player.Name); ;
                     Process.Start(StartInfo);
                 };
             }
@@ -89,7 +90,9 @@ namespace PlayersMonitor
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
                     StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerDisconnected, reg, "$1");
                     if (Config.RunCommandForPlayerDisconnected.Contains(" "))
-                        StartInfo.Arguments = Regex.Replace(Config.RunCommandForPlayerDisconnected, reg, "$2");
+                        StartInfo.Arguments = Regex
+                        .Replace(Config.RunCommandForPlayerDisconnected, reg, "$2")
+                        .Replace("$PLAYER_NAME",player.Name);
                     Process.Start(StartInfo);
                 };
             }
