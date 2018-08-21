@@ -5,6 +5,9 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Threading;
+using System.Xml.Serialization;
+using PlayersMonitor.Modes;
+using System.Collections.Generic;
 
 namespace PlayersMonitor
 {
@@ -22,11 +25,23 @@ namespace PlayersMonitor
         static void Main(string[] args)
         {
             Initializa();
-            
 
 
-            Modes.MonitorPlayer Monitor = new Modes.MonitorPlayer(Config, PlayerManager);
-            Monitor.StartAsync();
+            Console.ReadKey();
+
+            switch (Config.RunningMode)
+            {
+                case Mode.Type.Chart:
+                    string tag= GetServerTag("Data",Config.ServerHost, Config.ServerPort);
+                    Chart ChartMode = new Chart(Config,$"Data/{tag}");
+                    ChartMode.StartAsync();
+                    break;
+                case Mode.Type.Monitor:
+                    MonitorPlayer Monitor = new MonitorPlayer(Config, PlayerManager);
+                    Monitor.StartAsync();
+                    break;
+            }
+
 
             //Olny Windows Support this
             while (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
@@ -146,7 +161,27 @@ namespace PlayersMonitor
 #endif
             Screen.Clear();
         }
+        static string GetServerTag(string tagFilePath,string host,ushort port)
+        {
+            //我直接写一个完整一点的服务器列表吧...
+            List<ServerTag> tags = new List<ServerTag>();
+            tags.Add(new ServerTag() {
+                ServerHost = host,
+                ServerPort = port,
+                Tag = Guid.NewGuid()
+            });
+            XmlSerializer serializer = new XmlSerializer(typeof(List<ServerTag>));
+            XmlSerializerNamespaces refuse = new XmlSerializerNamespaces();
+            refuse.Add("", "");
+            serializer.Serialize(Console.OpenStandardOutput(), tags, refuse);
+            return null;
+        }
+        public class ServerTag
+        {
+            public string ServerHost { get; set; }
+            public ushort ServerPort { get; set; }
+            public Guid Tag { get; set; }
+        }
 
-        
     }
 }

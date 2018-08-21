@@ -6,6 +6,11 @@ namespace PlayersMonitor.Modes
 {
     public class Mode
     {
+        public enum Type
+        {
+            Chart,
+            Monitor
+        }
         protected enum Statuses
         {
             Initializing,

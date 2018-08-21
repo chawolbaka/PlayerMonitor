@@ -1,5 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
+using PlayersMonitor.Modes;
 
 namespace PlayersMonitor
 {
@@ -7,8 +8,10 @@ namespace PlayersMonitor
     {
 
         public string TitleStyle { get; } = "$IP:$PORT($PING_TIMEms)";
+        public Mode.Type RunningMode { get; } = Mode.Type.Monitor;
         public string ServerHost { get; set; }
         public ushort ServerPort { get; set; }
+        
 
         public int SleepTime { get; set; } = 1500;
         public int Blood { get; set; } = 8;
@@ -73,12 +76,23 @@ namespace PlayersMonitor
                 {
                     RunCommandForPlayerDisconnected = args[i + 1];
                 }
+                else if (args[i].ToLower() == "-mode" && args.Length >= i + 1)
+                {
+                    switch (args[i+1].ToLower())
+                    {
+                        case "monitor": RunningMode = Mode.Type.Monitor; break;
+                        case "chart": RunningMode = Mode.Type.Chart; break;
+                        default://我直接抛异常是不是不太好,不过现在懒的想怎么提醒用户了
+                            Console.WriteLine("QAQ不要输入不存在的模式呀...");
+                            throw new ArgumentOutOfRangeException(
+                                "-mode",//Argument Name
+                                "monitor or chart",//ActualValue(这是允许范围吗?)
+                                "input argument out of support range");//Message
+                    }
+                }
             }
         }
-
         public static Configuration Load(string[] args) => new Configuration(args);
-        
-
         public static Configuration Load(string ConfigFilePath)
         {
             throw new NotImplementedException();

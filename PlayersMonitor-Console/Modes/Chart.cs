@@ -53,7 +53,7 @@ namespace PlayersMonitor.Modes
                         new JProperty("ServerHost",Config.ServerHost),
                         new JProperty("ServerPort",Config.ServerPort),
                         new JProperty("MaxNumberOfPlayer", pingInfo.Player.Max),
-                        new JProperty("Data"));
+                        new JProperty("data"));
             StreamWriter stream = new StreamWriter(fileName,false,Encoding.UTF8);
             stream.Write(json.ToString(Formatting.None));
             stream.Flush();
@@ -64,12 +64,12 @@ namespace PlayersMonitor.Modes
             try
             {
                 var json = JObject.Parse(File.ReadAllText(fileName, Encoding.UTF8));
-                JArray DataArray = (JArray)json["Data"];
+                JArray DataArray = (JArray)json["data"];
                 DataArray.Add(
                     new JObject(
-                        new JProperty("Time", DateTime.Now.ToString("HH:mm:ss")),
-                        new JProperty("Online", PingInfo.Player.Online)));
-                json["Data"] = DataArray;
+                        new JProperty("time", DateTime.Now.ToString("HH:mm:ss")),
+                        new JProperty("online", PingInfo.Player.Online)));
+                json["data"] = DataArray;
                 StreamWriter stream = new StreamWriter(fileName, false, Encoding.UTF8);
                 stream.Write(json.ToString(Formatting.None));
                 stream.Flush();
