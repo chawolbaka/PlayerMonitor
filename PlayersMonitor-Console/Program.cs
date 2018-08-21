@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.IO;
+using System.Threading;
 
 namespace PlayersMonitor
 {
@@ -21,13 +22,10 @@ namespace PlayersMonitor
         static void Main(string[] args)
         {
             Initializa();
+            
 
-            //Test Server
-            Config.ServerHost = "mc-sm.com";
-            Config.ServerPort = 23533;
-			
-			
-            Modes.MonitorPlayer Monitor = new Modes.MonitorPlayer(Config,PlayerManager);
+
+            Modes.MonitorPlayer Monitor = new Modes.MonitorPlayer(Config, PlayerManager);
             Monitor.StartAsync();
 
             //Olny Windows Support this
@@ -39,6 +37,7 @@ namespace PlayersMonitor
                     Console.CursorVisible = true;
                     Environment.Exit(0);
                 }
+
             }
         }
         static void Initializa()
@@ -62,7 +61,7 @@ namespace PlayersMonitor
             {
                 PlayerManager.PlayerJoinedEvnt += player =>
                 {
-                    string reg = @"(\S+)\s(\S+)";
+                    string reg = @"^(\S+) (.*)$";
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
                     StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerJoin, reg, "$1");
                     if (Config.RunCommandForPlayerJoin.Contains(" "))
@@ -74,7 +73,7 @@ namespace PlayersMonitor
             {
                 PlayerManager.PlayerJoinedEvnt += player =>
                 {
-                    string reg = @"(\S+)\s(\S+)";
+                    string reg = @"^(\S+) (.*)$";
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
                     StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerDisconnected, reg, "$1");
                     if (Config.RunCommandForPlayerDisconnected.Contains(" "))
