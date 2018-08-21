@@ -60,6 +60,7 @@ namespace PlayersMonitor
 
                 if (PlayersList[i].Blood == 0)
                 {
+                    Player PlayerTmp = PlayersList[i];
                     Screen.RemoveLine(PlayersList[i].ScreenTag, true);
                     PlayersList.Remove(PlayersList[i]);
                     if (PlayersList.Count > 1)
@@ -69,7 +70,7 @@ namespace PlayersMonitor
                             Screen.ReviseField((j+1).ToString("D2"), 1, PlayersList[j].ScreenTag);
                         }
                     }
-                    PlayerDisconnectedEvent?.Invoke(PlayersList[i]);
+                    PlayerDisconnectedEvent?.Invoke(PlayerTmp);
                 }
                 else
                 {
