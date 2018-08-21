@@ -90,8 +90,8 @@ namespace PlayersMonitor.Modes
         }
         private string GetServerVersionNameColor(string serverVersionName)
         {
-            //绿色代表支持显示玩家,黄色代表未知,红色代表不支持(不精确,可能哪天突然这个服务端就不支持了)
-
+            //绿色代表可能支持显示玩家,黄色代表未知,红色代表不支持
+            //(不精确,可能哪天突然这个服务端就不支持了,或者使用了什么插件禁止这种操作了)
             if (serverVersionName.ToLower().Contains("spigot"))
                 return $"&a{serverVersionName}";
             else if (serverVersionName.ToLower().Contains("thermos"))
@@ -104,7 +104,7 @@ namespace PlayersMonitor.Modes
         private PingReply ExceptionHandler(Run run)
         {
             DateTime? FirstTime = null;
-            int RetryTime = 1000 * 8;
+            int RetryTime = 1000 * 6;
             int TryTick = 0;
             while (true)
             {
@@ -117,9 +117,12 @@ namespace PlayersMonitor.Modes
                 }
                 catch (SocketException e)
                 {
-                    Console.Clear();
-                    Console.Title = "发生了网路错误...";
+                    //如果能恢复的话屏幕那边需要重新初始化
+                    Screen.Clear();
                     IsFirstPrint = true;
+
+                    //这个我在考虑要不要移动到下面去
+                    
                     if (e.ErrorCode == (int)SocketError.HostNotFound)
                     {
                         //我没找到linux上这个错误的错误代码...
@@ -134,28 +137,39 @@ namespace PlayersMonitor.Modes
                         if (FirstTime == null)
                         {
                             FirstTime = DateTime.Now;
-                            Console.WriteLine($"Time:{FirstTime.ToString()}");
-                            Console.WriteLine($"ErrorMessage:{e.Message}(ErrorCode:{e.ErrorCode})");
+                        }
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
+                        {
+                            Console.Title = $"网络发生了一点错误(qwq不要怕!可能过一会就可以恢复啦)";
+                            Screen.WriteLine($"&f发生时间(首次)&r:&e{FirstTime.ToString()}");
+                            Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
+                            Screen.WriteLine($"&c错误信息&r:&c{e.Message}&e(&c错误代码&f:&c{e.ErrorCode}&e)");
                         }
                         else
                         {
-                            Console.WriteLine($"首次发生错误的时间:{FirstTime.ToString()}");
-                            Console.WriteLine($"本次发生错误的时间:{DateTime.Now.ToString()}");
-                            Console.WriteLine($"错误信息:{e.Message}(错误代码:{e.ErrorCode})");
+                            Console.Title = $"发生了网络异常";
+                            Screen.WriteLine($"&f发生时间(首次)&r:&e{FirstTime.ToString()}");
+                            Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
+                            Screen.WriteLine($"&e详细信息&r:&c{e.ToString()}");
                         }
                         if (TryTick == 0)
-                            Console.WriteLine($"将在{(RetryTime / 1000.0f).ToString("F2")}秒后重试");
-                        else if (TryTick > ushort.MaxValue)
-                        {
+                            Screen.Write($"将在&f{(RetryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");
+                        else if (TryTick < ushort.MaxValue) 
+                            Console.WriteLine($"&e已重试&r:&f{TryTick}次,{(RetryTime / 1000.0f).ToString("F2")}秒后将继续尝试去重新连接服务器");                        
+                        else {
                             Console.WriteLine($"已到达最大重试次数({ushort.MaxValue})");
                             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
                                 Console.ReadKey(true);
                             Environment.Exit(-1);
                         }
-                        else
-                            Console.WriteLine($"将在{(RetryTime / 1000.0f).ToString("F2")}秒后重试(已重试{TryTick}次)");
-                        TryTick++;
+                        
+                        //随机重试时间
+                        RetryTime += new Random().Next(23, 2333*3);
+                        RetryTime -= new Random().Next(23, 2333*3);
+                        if (RetryTime <= 1000)
+                            RetryTime = 1000*6;
                         Thread.Sleep(RetryTime);
+                        TryTick++;
                         continue;
                     }
                 }

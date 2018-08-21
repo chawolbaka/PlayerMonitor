@@ -4,7 +4,8 @@ using System.Text;
 
 namespace PlayersMonitor
 {
-    //无视效率,只要不造成闪烁就可以啦(QAQ我想不无视也不行呀,要是还要考虑效率的话我怕连一个可以用的版本都发不出来了)
+    //无视效率,只要不造成闪烁就可以啦
+    //(QAQ我想不无视也不行呀,要是还要考虑效率的话我怕连一个可以用的版本都发不出来了)
     internal static class Screen
     {
         private static List<Line> Lines = new List<Line>();
@@ -120,6 +121,8 @@ namespace PlayersMonitor
             Console.Clear();
         }
 
+        public static void Write(string s) => CorlorsPrint(s, false);
+        public static void WriteLine(string s)=> CorlorsPrint(s, true);
 
         private static void WriteAt(string s, int x, int y)
         {
