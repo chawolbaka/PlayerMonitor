@@ -48,11 +48,11 @@ namespace PlayersMonitor.Modes
         private void CreateJson(string fileName,PingReply pingInfo)
         {
             var json = new JObject(
-                        new JProperty("Type", "CHART:PLAYERS_ONLIE"),
-                        new JProperty("DateTime",DateTime.Now.ToString("yyyy-mm-dd")),
-                        new JProperty("ServerHost",Config.ServerHost),
-                        new JProperty("ServerPort",Config.ServerPort),
-                        new JProperty("MaxNumberOfPlayer", pingInfo.Player.Max),
+                        new JProperty("type", "CHART:PLAYERS_ONLIE"),
+                        new JProperty("date",DateTime.Now.ToString("yyyy-mm-dd")),
+                        new JProperty("server_host",Config.ServerHost),
+                        new JProperty("server_port",Config.ServerPort),
+                        new JProperty("max_player", pingInfo.Player.Max),
                         new JProperty("data"));
             StreamWriter stream = new StreamWriter(fileName,false,Encoding.UTF8);
             stream.Write(json.ToString(Formatting.None));
@@ -63,12 +63,15 @@ namespace PlayersMonitor.Modes
         {
             try
             {
+                string Ping_Pong_Time = PingInfo.Time == null ? "unknown" : PingInfo.Time.ToString();
                 var json = JObject.Parse(File.ReadAllText(fileName, Encoding.UTF8));
                 JArray DataArray = (JArray)json["data"];
                 DataArray.Add(
                     new JObject(
                         new JProperty("time", DateTime.Now.ToString("HH:mm:ss")),
-                        new JProperty("online", PingInfo.Player.Online)));
+                        new JProperty("online", PingInfo.Player.Online),
+                        new JProperty("ping_pong",Ping_Pong_Time)
+                        ));
                 json["data"] = DataArray;
                 StreamWriter stream = new StreamWriter(fileName, false, Encoding.UTF8);
                 stream.Write(json.ToString(Formatting.None));
