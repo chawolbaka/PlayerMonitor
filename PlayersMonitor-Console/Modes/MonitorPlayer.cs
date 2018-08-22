@@ -185,6 +185,10 @@ namespace PlayersMonitor.Modes
                             continue;
                         }
                     }
+                    if (FirstTime == null)
+                        FirstTime = DateTime.Now;
+                    Screen.WriteLine($"&f发生时间(首次)&r:&e{FirstTime.ToString()}");
+                    Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
                     Screen.WriteLine("&cjson解析错误&f:&r服务器返回了一个无法被解析的json");
                     if (Result != null)
                     {
