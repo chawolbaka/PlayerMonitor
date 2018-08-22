@@ -155,7 +155,7 @@ namespace PlayersMonitor.Modes
                             Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
                             Screen.WriteLine($"&e详细信息&r:&c{e.ToString()}");
                         }
-                        Retry(ref RetryTime, TryTick, MaxTryTick);
+                        Retry(ref RetryTime, ref TryTick, MaxTryTick);
                         continue;
                     }
                 }
@@ -196,7 +196,7 @@ namespace PlayersMonitor.Modes
                         Screen.WriteLine($"{Result.ToString()}");
                     }
                     Screen.WriteLine($"&e详细信息&r:&c{je.ToString()}");
-                    Retry(ref RetryTime, TryTick, MaxTryTick);
+                    Retry(ref RetryTime, ref TryTick, MaxTryTick);
                     continue;
                 }
                 catch (Exception)
@@ -208,7 +208,7 @@ namespace PlayersMonitor.Modes
                 }
             }
         }
-        private void Retry(ref int retryTime, int tick,int maxTick)
+        private void Retry(ref int retryTime, ref int tick,int maxTick)
         {
             if (tick == 0)
                 Screen.Write($"将在&f{(retryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");

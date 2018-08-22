@@ -70,7 +70,7 @@ namespace PlayersMonitor.Modes
                     new JObject(
                         new JProperty("time", DateTime.Now.ToString("HH:mm:ss")),
                         new JProperty("online", PingInfo.Player.Online),
-                        new JProperty("ping_pong",Ping_Pong_Time)
+                        new JProperty("delay",Ping_Pong_Time)
                         ));
                 json["data"] = DataArray;
                 StreamWriter stream = new StreamWriter(fileName, false, Encoding.UTF8);
