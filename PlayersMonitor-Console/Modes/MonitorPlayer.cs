@@ -5,6 +5,7 @@ using MinecraftProtocol.Utils;
 using MinecraftProtocol.DataType;
 using System.Runtime.InteropServices;
 using System.Drawing;
+using Newtonsoft.Json;
 using System.IO;
 
 namespace PlayersMonitor.Modes
@@ -109,12 +110,13 @@ namespace PlayersMonitor.Modes
             int MaxTryTick = ushort.MaxValue;
             while (true)
             {
+                PingReply Result=null;
                 try
                 {
-                    PingReply tmp = run();
+                    Result = run();
                     FirstTime = null;
                     TryTick = 0;
-                    return tmp;
+                    return Result;
                 }
                 catch (SocketException e)
                 {
@@ -153,34 +155,45 @@ namespace PlayersMonitor.Modes
                             Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
                             Screen.WriteLine($"&e详细信息&r:&c{e.ToString()}");
                         }
-                        if (TryTick == 0)
-                            Screen.Write($"将在&f{(RetryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");
-                        else if (TryTick < MaxTryTick) 
-                            Screen.WriteLine($"&e已重试&r:&f{TryTick}次,{(RetryTime / 1000.0f).ToString("F2")}秒后将继续尝试去重新连接服务器");                        
-                        else {
-                            Console.WriteLine($"已到达最大重试次数({MaxTryTick})");
-                            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
-                                Console.ReadKey(true);
-                            Environment.Exit(-1);
-                        }
-
-                        //随机重试时间
-                        if (TryTick > MaxTryTick / 2)
-                        {
-                            RetryTime += new Random().Next(2333, 33333 * 3);
-                            RetryTime -= new Random().Next(233, 33333 * 3);
-                        }
-                        else
-                        {
-                            RetryTime += new Random().Next(233, 2333 * 3);
-                            RetryTime -= new Random().Next(23, 2333 * 3);
-                        }
-                        if (RetryTime <= 1000)
-                            RetryTime = 1000*6;
-                        Thread.Sleep(RetryTime);
-                        TryTick++;
+                        Retry(ref RetryTime, TryTick, MaxTryTick);
                         continue;
                     }
+                }
+                catch (JsonException je)
+                {
+                    IsFirstPrint = true;
+                    Console.Title = "";
+                    Screen.Clear();
+                    if (je is JsonSerializationException)
+                    {
+                        string ErrorJson  = Result?.ToString();
+                        if (!string.IsNullOrWhiteSpace(ErrorJson)&&
+                            ErrorJson.Contains("Server is still starting! Please wait before reconnecting"))
+                        {
+                            if (TryTick>short.MaxValue)
+                            {
+                                Console.WriteLine("这服务器怎么一直在开启中的,怕是出了什么bug了...");
+                                Console.WriteLine($"请把这些信息复制给作者来修bug:{je.ToString()}");
+                            }
+                            else
+                            {
+
+                                Console.WriteLine("服务器正在开启中,程序将暂时16秒等待服务器开启...");
+                                Thread.Sleep(1000 * 16);
+                            }
+                            TryTick++;
+                            continue;
+                        }
+                    }
+                    Screen.WriteLine("&cjson解析错误&f:&r服务器返回了一个无法被解析的json");
+                    if (Result != null)
+                    {
+                        Screen.WriteLine($"&e无法被解析的json&f:");
+                        Screen.WriteLine($"{Result.ToString()}");
+                    }
+                    Screen.WriteLine($"&e详细信息&r:&c{je.ToString()}");
+                    Retry(ref RetryTime, TryTick, MaxTryTick);
+                    continue;
                 }
                 catch (Exception)
                 {
@@ -191,6 +204,35 @@ namespace PlayersMonitor.Modes
                 }
             }
         }
+        private void Retry(ref int retryTime, int tick,int maxTick)
+        {
+            if (tick == 0)
+                Screen.Write($"将在&f{(retryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");
+            else if (tick < maxTick)
+                Screen.WriteLine($"&e已重试&r:&f{tick}次,{(retryTime / 1000.0f).ToString("F2")}秒后将继续尝试去重新连接服务器");
+            else
+            {
+                Console.WriteLine($"已到达最大重试次数({maxTick})");
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
+                    Console.ReadKey(true);
+                Environment.Exit(-1);
+            }
 
+            //随机重试时间
+            if (tick > maxTick / 2)
+            {
+                retryTime += new Random().Next(2333, 33333 * 3);
+                retryTime -= new Random().Next(233, 33333 * 3);
+            }
+            else
+            {
+                retryTime += new Random().Next(233, 2333 * 3);
+                retryTime -= new Random().Next(23, 2333 * 3);
+            }
+            if (retryTime <= 1000)
+                retryTime = 1000 * 6;
+            Thread.Sleep(retryTime);
+            tick++;
+        }
     }
 }
