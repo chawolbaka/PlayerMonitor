@@ -37,7 +37,7 @@ namespace PlayersMonitor.Modes
                 string FileName= Path.Combine(DataPath, $"{DateTime.Now.ToString("yyyy-MM-dd")}.json");
                 if (File.Exists(FileName) == false)
                     CreateJson(FileName,PingResult);
-                if (IsPrint == true)
+                if (IsPrint)
                     Console.WriteLine($"[{DateTime.Now.ToString()}]玩家数量:{PingResult.Player.Online}");
                 WriteData(FileName,PingResult);
                 Thread.Sleep(Interval);
@@ -78,7 +78,7 @@ namespace PlayersMonitor.Modes
                 stream.Flush();
                 stream.Close();
             }
-            catch (IOException e)
+            catch (IOException)
             {
                 //无视IO错误
             }

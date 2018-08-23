@@ -102,7 +102,7 @@ namespace PlayersMonitor
                 for (int i = FindResult.y; i < Lines.Count; i++)
                 {
                     Lines[i].y -= 1;
-                    if (rePirint == true)
+                    if (rePirint)
                     {
                         WriteWhiteSpaceAt(ClearLength, 0, Lines[i].y);
                         WriteWhiteSpaceAt(ClearLength, 0, Lines[i].y + 1);
@@ -131,7 +131,7 @@ namespace PlayersMonitor
             bool HasColorCode = s.Contains('&');
             Console.CursorVisible = false;
             Console.SetCursorPosition(x, y);
-            if (HasColorCode == true)
+            if (HasColorCode)
                 CorlorsPrint(s);
             else
                 Console.Write(s);
@@ -186,7 +186,7 @@ namespace PlayersMonitor
                 Console.Write(s[i]);
                 if (i >= s.Length) break;
             }
-            if (line == true)
+            if (line)
                 Console.WriteLine();
             Console.ResetColor();
         }

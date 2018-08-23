@@ -4,9 +4,10 @@ using System.Net.Sockets;
 using MinecraftProtocol.Utils;
 using MinecraftProtocol.DataType;
 using System.Runtime.InteropServices;
-using System.Drawing;
 using Newtonsoft.Json;
-using System.IO;
+#if IsDoNet
+using System.Drawing;
+#endif
 
 namespace PlayersMonitor.Modes
 {
@@ -53,12 +54,13 @@ namespace PlayersMonitor.Modes
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
                     Replace("$PING_TIME",Time!=null?((float)Time).ToString("F2"):$"{(~new Random().Next(1, 233))+1}");
-                if (IsFirstPrint == true)
+                if (IsFirstPrint)
                 {
                     Screen.Clear();
                     Tag_S = Screen.CreateLine("服务端版本:", "");
                     Tag_C = Screen.CreateLine("在线人数:", "");
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true && 
+#if IsDonet
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && 
                         !string.IsNullOrWhiteSpace(PingResult.Icon))
                     {
                         byte[] Icon_bytes = Convert.FromBase64String(
@@ -73,6 +75,7 @@ namespace PlayersMonitor.Modes
                             } catch { throw; }
                         }
                     }
+#endif
                     IsFirstPrint = false;
                 }
                 Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_S);
@@ -131,7 +134,7 @@ namespace PlayersMonitor.Modes
                         //我没找到linux上这个错误的错误代码...
                         Console.BackgroundColor = ConsoleColor.Red;
                         Console.WriteLine("服务器地址错误(找不到这个地址)");
-                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                             Console.ReadKey(true);
                         Environment.Exit(-1);
                     }
@@ -141,7 +144,7 @@ namespace PlayersMonitor.Modes
                         {
                             FirstTime = DateTime.Now;
                         }
-                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                         {
                             Console.Title = $"网络发生了一点错误(qwq不要怕!可能过一会就可以恢复啦)";
                             Screen.WriteLine($"&f发生时间(首次)&r:&e{FirstTime.ToString()}");
@@ -217,7 +220,7 @@ namespace PlayersMonitor.Modes
             else
             {
                 Console.WriteLine($"已到达最大重试次数({maxTick})");
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                     Console.ReadKey(true);
                 Environment.Exit(-1);
             }

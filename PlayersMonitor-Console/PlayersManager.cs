@@ -129,9 +129,9 @@ namespace PlayersMonitor
                 if (Uuid != null && !string.IsNullOrWhiteSpace(Name))
                 {
                     //缓存
-                    if (HasBuyGame != null && HasBuyGame == true)
+                    if (HasBuyGame != null && HasBuyGame==true)
                         return OnlineMode;
-                    else if (HasBuyGame != null && HasBuyGame == false)
+                    else if (HasBuyGame != null && HasBuyGame != true)
                         return false;
                     //没有缓存的话就去通过API获取
                     try
@@ -140,7 +140,7 @@ namespace PlayersMonitor
                         string html = Encoding.UTF8.GetString(wc.DownloadData(
                             @"https://api.mojang.com/users/profiles/minecraft/" + Name));
                         HasBuyGame = !string.IsNullOrWhiteSpace(html);
-                        if (HasBuyGame == false)
+                        if (HasBuyGame !=true)
                             return null;
                         OnlineMode = html.Contains(Uuid.ToString().Replace("-", string.Empty));
                         return OnlineMode;

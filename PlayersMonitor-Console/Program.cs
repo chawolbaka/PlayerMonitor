@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define IsDoNet
+using System;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
@@ -40,7 +41,7 @@ namespace PlayersMonitor
             }
 
             //Olny Windows Support this
-            while (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) == true)
+            while (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 ConsoleKeyInfo Input = Console.ReadKey(true);
                 if (Input.Key == ConsoleKey.Q || Input.Key == ConsoleKey.Escape)
