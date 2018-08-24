@@ -90,9 +90,10 @@ namespace PlayersMonitor
         {
             Line FindResult = Lines.Find(x => x.Tag == tag);
             if (FindResult == null)
-                throw new ArgumentException("Tag does not exist", nameof(tag));
+                throw new ArgumentOutOfRangeException(nameof(tag), $"Tag \"{tag}\" does not exist");
             Lines.Remove(FindResult);
             int ClearLength = Console.BufferWidth;
+
             if (Lines.Count==FindResult.y)
             {
                 WriteWhiteSpaceAt(ClearLength, 0, FindResult.y);
@@ -101,7 +102,7 @@ namespace PlayersMonitor
             {
                 for (int i = FindResult.y; i < Lines.Count; i++)
                 {
-                    Lines[i].y -= 1;
+                    Lines[i].y --;
                     if (rePirint)
                     {
                         WriteWhiteSpaceAt(ClearLength, 0, Lines[i].y);
@@ -115,6 +116,11 @@ namespace PlayersMonitor
             }
             Console.SetCursorPosition(Console.CursorLeft, Console.CursorTop-1);
         }
+        public static bool HasLine(string tag)
+        {
+            Line Result = Lines.Find(x => x.Tag == tag);
+            return Result == null ? false : true;
+        }
         public static void Clear()
         {
             Lines.Clear();
@@ -123,7 +129,6 @@ namespace PlayersMonitor
 
         public static void Write(string s) => CorlorsPrint(s, false);
         public static void WriteLine(string s)=> CorlorsPrint(s, true);
-
         private static void WriteAt(string s, int x, int y)
         {
             int buff_top = Console.CursorTop;
@@ -199,6 +204,7 @@ namespace PlayersMonitor
                 {
                     switch (s[i + 1])
                     {
+                        //颜色代码
                         case '0': result += 1; i += 2; break;
                         case '1': result += 1; i += 2; break;
                         case '2': result += 1; i += 2; break;
@@ -215,28 +221,66 @@ namespace PlayersMonitor
                         case 'd': result += 1; i += 2; break;
                         case 'e': result += 1; i += 2; break;
                         case 'f': result += 1; i += 2; break;
+                        //样式代码
                         case 'r': result += 1; i += 2; break;
+                        case 'k': result += 1; i += 2; break;
+                        case 'l': result += 1; i += 2; break;
+                        case 'm': result += 1; i += 2; break;
+                        case 'n': result += 1; i += 2; break;
+                        case 'o': result += 1; i += 2; break;
                     }
                 }
 
             }
             return result;
         }
-        private static int GetStringLength(string s,bool HasColorCodeLength =false)
+        private static int GetStringLength(string str)
         {
-            int length = HasColorCodeLength == false? ~(GetColorCodeCount(s) * 2) + 1:0;
-            foreach (var text in s)
+            int length = 0;
+            for (int i = 0; i < str.Length; i++)
             {
-                int tmp = Encoding.UTF8.GetBytes(text.ToString()).Length;
-                switch (tmp)
+                if (str[i] =='&')
                 {
-                    case 3: length += 2; break;
-                    case 4: length += 2; break;
-                    default: length += tmp; break;
+                    switch (str[i + 1])
+                    {
+                        //颜色代码
+                        case '0': i++; continue;
+                        case '1': i++; continue;
+                        case '2': i++; continue;
+                        case '3': i++; continue;
+                        case '4': i++; continue;
+                        case '5': i++; continue;
+                        case '6': i++; continue;
+                        case '7': i++; continue;
+                        case '8': i++; continue;
+                        case '9': i++; continue;
+                        case 'a': i++; continue;
+                        case 'b': i++; continue;
+                        case 'c': i++; continue;
+                        case 'd': i++; continue;
+                        case 'e': i++; continue;
+                        case 'f': i++; continue;
+                        //样式代码
+                        case 'r': i++; continue;
+                        case 'k': i++; continue;
+                        case 'l': i++; continue;
+                        case 'm': i++; continue;
+                        case 'n': i++; continue;
+                        case 'o': i++; continue;
+                    }
+                }
+                else
+                {
+                    int tmp = Encoding.UTF8.GetBytes(str[i].ToString()).Length;
+                    switch (tmp)
+                    {
+                        case 3: length += 2; break;
+                        case 4: length += 2; break;
+                        default: length += tmp; break;
+                    }
                 }
             }
             return length;
-
         }
         private class Line
         {
