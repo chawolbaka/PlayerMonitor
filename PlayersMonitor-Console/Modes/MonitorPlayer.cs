@@ -44,21 +44,24 @@ namespace PlayersMonitor.Modes
 
         private void StartPrintInfo(object obj)
         {
+
             Ping Ping = obj as Ping;
-            string Tag_S = "", Tag_C = "";
-            while (Status == Statuses.Running)
-            {
-                PingReply PingResult = ExceptionHandler(Ping.Send);
-                float? Time = PingResult.Time / 10000.0f;
-                Console.Title = Config.TitleStyle.
-                    Replace("$IP", Config.ServerHost).
-                    Replace("$PORT", Config.ServerPort.ToString()).
-                    Replace("$PING_TIME",Time!=null?((float)Time).ToString("F2"):$"{(~new Random().Next(1, 233))+1}");
-                if (IsFirstPrint)
+            try { 
+            
+                string Tag_S = "", Tag_C = "";
+                while (Status == Statuses.Running)
                 {
-                    Screen.Clear();
-                    Tag_S = Screen.CreateLine("服务端版本:", "");
-                    Tag_C = Screen.CreateLine("在线人数:", "");
+                    PingReply PingResult = ExceptionHandler(Ping.Send);
+                    float? Time = PingResult.Time / 10000.0f;
+                    Console.Title = Config.TitleStyle.
+                        Replace("$IP", Config.ServerHost).
+                        Replace("$PORT", Config.ServerPort.ToString()).
+                        Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{(~new Random().Next(1, 233)) + 1}");
+                    if (IsFirstPrint)
+                    {
+                        Screen.Clear();
+                        Tag_S = Screen.CreateLine("服务端版本:", "");
+                        Tag_C = Screen.CreateLine("在线人数:", "");
 #if IsDonet
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && 
                         !string.IsNullOrWhiteSpace(PingResult.Icon))
@@ -76,21 +79,28 @@ namespace PlayersMonitor.Modes
                         }
                     }
 #endif
-                    IsFirstPrint = false;
-                }
-                Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_S);
-                Screen.ReviseField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_C);
-                if (PingResult.Player.Samples != null)
-                {
-                    foreach (var player in PingResult.Player.Samples)
-                    {
-                        PlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
+                        IsFirstPrint = false;
                     }
+                    Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_S);
+                    Screen.ReviseField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_C);
+                    if (PingResult.Player.Samples != null)
+                    {
+                        foreach (var player in PingResult.Player.Samples)
+                        {
+                            PlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
+                        }
+                    }
+                    PlayerManager.LifeTimer();
+                    Thread.Sleep(Config.SleepTime + new Random().Next(0, 256));
                 }
-                PlayerManager.LifeTimer();
-                Thread.Sleep(Config.SleepTime + new Random().Next(0, 256));
+                return;
             }
-            return;
+            catch (ArgumentOutOfRangeException e)
+            {
+                Console.WriteLine($"Time:{DateTime.Now}");
+                Console.WriteLine(PlayerManager.ToString());
+                throw;
+            }
         }
         private string GetServerVersionNameColor(string serverVersionName)
         {

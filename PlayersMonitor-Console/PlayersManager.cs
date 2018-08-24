@@ -57,17 +57,18 @@ namespace PlayersMonitor
             for (int i = 0; i < PlayersList.Count; i++)
             {
                 PlayersList[i].Blood--;
-                
+
                 if (PlayersList[i].Blood == 0)
                 {
                     Player PlayerTmp = PlayersList[i];
-                    Screen.RemoveLine(PlayersList[i].ScreenTag, true);
                     PlayersList.Remove(PlayersList[i--]);
+                    //从屏幕上移除这个玩家&修改其它玩家的序号(屏幕上的)
+                    Screen.RemoveLine(PlayerTmp.ScreenTag, true);
                     if (PlayersList.Count > 1)
                     {
                         for (int j = 0; j < PlayersList.Count; j++)
                         {
-                            Screen.ReviseField((j+1).ToString("D2"), 1, PlayersList[j].ScreenTag);
+                            Screen.ReviseField((j + 1).ToString("D2"), 1, PlayersList[j].ScreenTag);
                         }
                     }
                     PlayerDisconnectedEvent?.Invoke(PlayerTmp);
@@ -97,6 +98,15 @@ namespace PlayersMonitor
                 return "&e";
             else
                 return "&a";
+        }
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var item in PlayersList)
+            {
+                sb.Append($"{item.ToString()}\r\n");
+            }
+           return sb.ToString();
         }
         public class Player
         {
@@ -152,6 +162,16 @@ namespace PlayersMonitor
                 }
                 else
                     throw new ArgumentNullException("Uuid or Name");
+            }
+
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append($"Name:{Name},");
+                sb.Append($"id:{Uuid.ToString()}");
+                sb.Append($"Blood:{Blood}");
+                sb.Append($"ScreenTag:{ScreenTag}");
+                return sb.ToString();
             }
         }
     }
