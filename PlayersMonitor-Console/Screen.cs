@@ -14,12 +14,19 @@ namespace PlayersMonitor
             int y = Lines.Count > 0 ? Lines.Count : 0;
             Line NewLine = new Line();
             NewLine.y = y;
-            NewLine.Tag = Guid.NewGuid().ToString();
+            //创建标签
+            string tag_temp = Guid.NewGuid().ToString();
+            while (Lines.Count > 0 && Lines.Find(l => l.Tag == tag_temp) != null)
+            {
+                tag_temp = Guid.NewGuid().ToString();
+            }
+            NewLine.Tag = tag_temp;
+            //把字段都添加进去
             foreach (var fireld in fields)
             {
                 NewLine.Fields.Add(new Line.Field() { Value = fireld });
             }
-            //计算3种长度
+            //计算每个字段的3种长度
             for (int i = 0; i < NewLine.Fields.Count; i++)
             {
                 NewLine.Fields[i].Length = GetStringLength(NewLine.Fields[i].Value);

@@ -64,7 +64,7 @@ namespace PlayersMonitor
                     PlayersList.Remove(PlayersList[i--]);
                     //从屏幕上移除这个玩家&修改其它玩家的序号(屏幕上的)
                     Screen.RemoveLine(PlayerTmp.ScreenTag, true);
-                    if (PlayersList.Count > 1)
+                    if (PlayersList.Count > 0)
                     {
                         for (int j = 0; j < PlayersList.Count; j++)
                         {
