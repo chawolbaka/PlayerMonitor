@@ -46,12 +46,14 @@ namespace PlayersMonitor.Modes
         {
 
             Ping Ping = obj as Ping;
-            try { 
-            
+            try {
                 string Tag_S = "", Tag_C = "";
                 while (Status == Statuses.Running)
                 {
+                    //获取Ping信息
                     PingReply PingResult = ExceptionHandler(Ping.Send);
+                    if (PingResult == null) return;
+                    //开始输出信息
                     float? Time = PingResult.Time / 10000.0f;
                     Console.Title = Config.TitleStyle.
                         Replace("$IP", Config.ServerHost).
@@ -95,7 +97,7 @@ namespace PlayersMonitor.Modes
                 }
                 return;
             }
-            catch (Exception e)
+            catch
             {
                 Console.WriteLine($"Time:{DateTime.Now}");
                 Console.WriteLine(PlayerManager.ToString());
@@ -115,30 +117,33 @@ namespace PlayersMonitor.Modes
             else
                 return $"&e{serverVersionName}";
         }
+
         private PingReply ExceptionHandler(Run run)
         {
             DateTime? FirstTime = null;
             int RetryTime = 1000 * 6;
             int TryTick = 0;
             int MaxTryTick = ushort.MaxValue;
-            while (true)
+            while (Status!= Statuses.Abort)
             {
                 PingReply Result=null;
                 try
                 {
                     Result = run();
-                    FirstTime = null;
-                    TryTick = 0;
-                    return Result;
+                    if (Result!=null)
+                    {
+                        FirstTime = null;
+                        TryTick = 0;
+                        return Result;
+                    }
+                    else 
+                        throw new NullReferenceException("Reply is null");
                 }
                 catch (SocketException e)
                 {
-                    //如果能恢复的话屏幕那边需要重新初始化
+                    //如果能恢复的话屏幕那边需要重新初始化,所以这边清理(初始化)一下
                     Screen.Clear();
                     IsFirstPrint = true;
-
-                    //这个我在考虑要不要移动到下面去
-                    
                     if (e.ErrorCode == (int)SocketError.HostNotFound)
                     {
                         //我没找到linux上这个错误的错误代码...
@@ -150,32 +155,25 @@ namespace PlayersMonitor.Modes
                     }
                     else
                     {
-                        if (FirstTime == null)
-                        {
-                            FirstTime = DateTime.Now;
-                        }
+                        PrintTime(FirstTime);
                         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                         {
                             Console.Title = $"网络发生了一点错误(qwq不要怕!可能过一会就可以恢复啦)";
-                            Screen.WriteLine($"&f发生时间(首次)&r:&e{FirstTime.ToString()}");
-                            Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
                             Screen.WriteLine($"&c错误信息&r:&c{e.Message}&e(&c错误代码&f:&c{e.ErrorCode}&e)");
                         }
                         else
                         {
                             Console.Title = $"发生了网络异常";
-                            Screen.WriteLine($"&f发生时间(首次)&r:&e{FirstTime.ToString()}");
-                            Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
                             Screen.WriteLine($"&e详细信息&r:&c{e.ToString()}");
                         }
-                        Retry(ref RetryTime, ref TryTick, MaxTryTick);
+                        RetryHandler(ref RetryTime, ref TryTick, MaxTryTick);
                         continue;
                     }
                 }
                 catch (JsonException je)
                 {
                     IsFirstPrint = true;
-                    Console.Title = "";
+                    Console.Title = string.Empty;
                     Screen.Clear();
                     if (je is JsonSerializationException)
                     {
@@ -198,10 +196,7 @@ namespace PlayersMonitor.Modes
                             continue;
                         }
                     }
-                    if (FirstTime == null)
-                        FirstTime = DateTime.Now;
-                    Screen.WriteLine($"&f发生时间(首次)&r:&e{FirstTime.ToString()}");
-                    Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
+                    PrintTime(FirstTime);
                     Screen.WriteLine("&cjson解析错误&f:&r服务器返回了一个无法被解析的json");
                     if (Result != null)
                     {
@@ -209,19 +204,35 @@ namespace PlayersMonitor.Modes
                         Screen.WriteLine($"{Result.ToString()}");
                     }
                     Screen.WriteLine($"&e详细信息&r:&c{je.ToString()}");
-                    Retry(ref RetryTime, ref TryTick, MaxTryTick);
+                    RetryHandler(ref RetryTime, ref TryTick, MaxTryTick);
+                    continue;
+                }
+                catch(NullReferenceException nre)
+                {
+                    StandardExceptionHandler(nre, "发生了异常", FirstTime, RetryTime, TryTick, MaxTryTick);
                     continue;
                 }
                 catch (Exception)
                 {
                     Console.Clear();
-                    Console.Title = "Error";
                     Console.WriteLine($"Time:{DateTime.Now.ToString()}");
                     throw;
                 }
             }
+            return null;
         }
-        private void Retry(ref int retryTime, ref int tick,int maxTick)
+        //虽然名字这样叫吧,但是其实只是在打印名字而已
+        private void StandardExceptionHandler(Exception e,string consoleTitle, DateTime? firstTime,int retryTime,int tryTick,int maxTryTick)
+        {
+            Console.Title = consoleTitle;
+            Screen.Clear();
+            IsFirstPrint = true;
+            //Print Info
+            PrintTime(firstTime);
+            Screen.WriteLine($"&e详细信息&r:&c{e.ToString()}");
+            RetryHandler(ref retryTime, ref tryTick, maxTryTick);
+        }
+        private void RetryHandler(ref int retryTime, ref int tick,int maxTick)
         {
             if (tick == 0)
                 Screen.Write($"将在&f{(retryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");
@@ -235,11 +246,11 @@ namespace PlayersMonitor.Modes
                 Environment.Exit(-1);
             }
 
-            //随机重试时间
+            //随机重试时间(随便写的)
             if (tick > maxTick / 2)
             {
-                retryTime += new Random().Next(2333, 33333 * 3);
-                retryTime -= new Random().Next(233, 33333 * 3);
+                retryTime += new Random().Next(233 * 2, 33333 * 3);
+                retryTime -= new Random().Next(23 * 3, 33333 * 3);
             }
             else
             {
@@ -250,6 +261,14 @@ namespace PlayersMonitor.Modes
                 retryTime = 1000 * 6;
             Thread.Sleep(retryTime);
             tick++;
+            Console.WriteLine("时间到,正在重试...");
+        }
+        private void PrintTime(DateTime? firstTime)
+        {
+            if (firstTime == null)
+                firstTime = DateTime.Now;
+            Screen.WriteLine($"&f发生时间(首次)&r:&e{firstTime.ToString()}");
+            Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
         }
     }
 }
