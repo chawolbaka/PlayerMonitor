@@ -95,7 +95,7 @@ namespace PlayersMonitor.Modes
                 }
                 return;
             }
-            catch (ArgumentOutOfRangeException e)
+            catch (Exception e)
             {
                 Console.WriteLine($"Time:{DateTime.Now}");
                 Console.WriteLine(PlayerManager.ToString());
