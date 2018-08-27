@@ -57,8 +57,13 @@ namespace PlayersMonitor
         static void Initializa()
         {
             IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            Console.InputEncoding = Encoding.UTF8;
-            Console.OutputEncoding = Encoding.UTF8;
+            if (!IsWindows)
+            {
+                //我改成UTF-8好像在一些Windows下会乱码,所以我暂时不改Windows的了
+                //(以后添加启动参数更改)
+                Console.InputEncoding = Encoding.UTF8;
+                Console.OutputEncoding = Encoding.UTF8;
+            }
             if (Environment.GetCommandLineArgs().Length == 0)
             {
                 //寻找配置文件,如果没找到就启动设置向导,并询问用户是否保存配置
@@ -164,6 +169,8 @@ namespace PlayersMonitor
 #endif
             Screen.Clear();
         }
+
+        //下面是暂时放着懒的写的坑
         static string GetServerTag(string tagFilePath,string host,ushort port)
         {
             //我直接写一个完整一点的服务器列表吧...
