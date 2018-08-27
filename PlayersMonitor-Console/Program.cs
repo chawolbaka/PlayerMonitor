@@ -1,12 +1,9 @@
-﻿//#define IsDoNet
-using System;
+﻿using System;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.IO;
-using System.Threading;
-using System.Xml.Serialization;
 using PlayersMonitor.Modes;
 using System.Collections.Generic;
 
@@ -16,26 +13,23 @@ namespace PlayersMonitor
     class Program
     {
 
-        public static readonly Version ProgromVersion = new Version("1.0.0");
-
         private static Configuration Config;
         private static PlayersManager PlayerManager;
-        private static bool IsWindows = false;
-        private static readonly string ConfigFilePath = "Config.xml";
+        private static bool IsWindows { get { return RuntimeInformation.IsOSPlatform(OSPlatform.Windows); } }
+        //private static readonly string ConfigFilePath = "Config.xml";
 
         static void Main(string[] args)
         {
-
-
-            Initializa();
+            Initializing();
 
             switch (Config.RunningMode)
             {
                 case Mode.Type.Chart:
-                    string tag= GetServerTag("Data",Config.ServerHost, Config.ServerPort);
-                    Chart ChartMode = new Chart(Config,$"Data/{tag}");
-                    ChartMode.StartAsync();
-                    break;
+                    throw new NotImplementedException("not support now");
+                    //string tag= GetServerTag("Data",Config.ServerHost, Config.ServerPort);
+                    //Chart ChartMode = new Chart(Config,$"Data/{tag}");
+                    //ChartMode.StartAsync();
+                    //break;
                 case Mode.Type.Monitor:
                     MonitorPlayer Monitor = new MonitorPlayer(Config, PlayerManager);
                     Monitor.StartAsync();
@@ -54,9 +48,10 @@ namespace PlayersMonitor
 
             }
         }
-        static void Initializa()
+
+
+        private static void Initializing()
         {
-            IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             if (!IsWindows)
             {
                 //我改成UTF-8好像在一些Windows下会乱码,所以我暂时不改Windows的了
@@ -64,18 +59,11 @@ namespace PlayersMonitor
                 Console.InputEncoding = Encoding.UTF8;
                 Console.OutputEncoding = Encoding.UTF8;
             }
-            if (Environment.GetCommandLineArgs().Length == 0)
-            {
-                //寻找配置文件,如果没找到就启动设置向导,并询问用户是否保存配置
-                if(File.Exists(ConfigFilePath))
-                {
-                    //Config = Configuration.Load(ConfigFilePath);
-                }
-            }
-            else {
-                Config = Configuration.Load(Environment.GetCommandLineArgs());
-            }
+            Config = Configuration.Load(Environment.GetCommandLineArgs());
             PlayerManager = new PlayersManager(Config);
+            Console.CancelKeyPress += ControlC_Handler;
+
+            //注册玩家上下线的事件
             if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerJoin))
             {
                 PlayerManager.PlayerJoinedEvnt += player =>
@@ -104,8 +92,8 @@ namespace PlayersMonitor
                     Process.Start(StartInfo);
                 };
             }
-            //这东西有点碍事,所以只在发布的时候出现吧
-            #if (DEBUG == false)
+            //让用户输入缺失的内容(这东西有点碍事,所以只在发布的时候出现吧)
+#if (!DEBUG)
             if (string.IsNullOrWhiteSpace(Config.ServerHost))
             {
                 Console.Write("服务器地址:");
@@ -167,31 +155,25 @@ namespace PlayersMonitor
                 Config.ServerPort = tmp;
             }
 #endif
-            Screen.Clear();
         }
-
-        //下面是暂时放着懒的写的坑
-        static string GetServerTag(string tagFilePath,string host,ushort port)
+        private static void ControlC_Handler(object sender, ConsoleCancelEventArgs args)
         {
-            //我直接写一个完整一点的服务器列表吧...
-            List<ServerTag> tags = new List<ServerTag>();
-            tags.Add(new ServerTag() {
-                ServerHost = host,
-                ServerPort = port,
-                Tag = Guid.NewGuid()
-            });
-            XmlSerializer serializer = new XmlSerializer(typeof(List<ServerTag>));
-            XmlSerializerNamespaces refuse = new XmlSerializerNamespaces();
-            refuse.Add("", "");
-            serializer.Serialize(Console.OpenStandardOutput(), tags, refuse);
-            return null;
+            try
+            {
+                if (args.SpecialKey == ConsoleSpecialKey.ControlC)
+                {
+                    //因为在修改控制台中的文字时会暂时隐藏光标
+                    //所以有概率在还没有改回来的状态下就被用户按下Ctrl+c然后光标就没了所以这边需要恢复一下
+                    Console.CursorVisible = true;
+                }
+            }
+            catch (Exception)
+            {
+                //不知道为什么我在bash下按会出现异常,所以暂时直接丢掉异常信息吧
+#if DEBUG
+                throw;
+#endif
+            }
         }
-        public class ServerTag
-        {
-            public string ServerHost { get; set; }
-            public ushort ServerPort { get; set; }
-            public Guid Tag { get; set; }
-        }
-
     }
 }

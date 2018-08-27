@@ -9,6 +9,7 @@ namespace PlayersMonitor
     internal static class Screen
     {
         private static List<Line> Lines = new List<Line>();
+
         public static string CreateLine(params string[] fields)
         {
             int y = Lines.Count > 0 ? Lines.Count : 0;
@@ -136,6 +137,7 @@ namespace PlayersMonitor
 
         public static void Write(string s) => CorlorsPrint(s, false);
         public static void WriteLine(string s)=> CorlorsPrint(s, true);
+
         private static void WriteAt(string s, int x, int y)
         {
             int buff_top = Console.CursorTop;

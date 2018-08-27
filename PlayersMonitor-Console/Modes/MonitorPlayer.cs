@@ -5,7 +5,7 @@ using MinecraftProtocol.Utils;
 using MinecraftProtocol.DataType;
 using System.Runtime.InteropServices;
 using Newtonsoft.Json;
-#if IsDoNet
+#if DoNet
 using System.Drawing;
 #endif
 
@@ -64,7 +64,7 @@ namespace PlayersMonitor.Modes
                         Screen.Clear();
                         Tag_S = Screen.CreateLine("服务端版本:", "");
                         Tag_C = Screen.CreateLine("在线人数:", "");
-#if IsDonet
+#if DoNet
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && 
                         !string.IsNullOrWhiteSpace(PingResult.Icon))
                     {

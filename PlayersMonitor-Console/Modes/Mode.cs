@@ -1,10 +1,11 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace PlayersMonitor.Modes
 {
-    public class Mode
+    public abstract class Mode
     {
         public enum Type
         {

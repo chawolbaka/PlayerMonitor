@@ -2,4 +2,4 @@ bin
 obj
 Properties
 *.exe
-/.vs/
+*.ps1

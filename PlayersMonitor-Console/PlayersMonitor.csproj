@@ -13,6 +13,7 @@
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   
   <ItemGroup>
@@ -23,6 +24,9 @@
   <ItemGroup>
     <Reference Include="MinecraftProtocol">
       <HintPath>Dependence\MinecraftProtocol\MinecraftProtocol.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>System</HintPath>
     </Reference>
   </ItemGroup>
 

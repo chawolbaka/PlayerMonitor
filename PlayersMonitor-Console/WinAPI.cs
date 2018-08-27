@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#if Windows
+using System;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace PlayersMonitor
 {
-
     internal static class WinAPI
     {
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -16,3 +14,4 @@ namespace PlayersMonitor
 
     }
 }
+#endif
