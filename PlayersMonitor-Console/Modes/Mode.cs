@@ -1,7 +1,5 @@
 ﻿
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace PlayersMonitor.Modes
 {
@@ -19,5 +17,8 @@ namespace PlayersMonitor.Modes
             Abort
         }
         protected Statuses Status { get; set; }
+
+        //public abstract void Start();
+        
     }
 }

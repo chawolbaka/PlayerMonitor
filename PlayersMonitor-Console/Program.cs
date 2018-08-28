@@ -48,8 +48,6 @@ namespace PlayersMonitor
 
             }
         }
-
-
         private static void Initializing()
         {
             if (!IsWindows)

@@ -14,6 +14,7 @@ namespace PlayersMonitor.Modes
         public bool IsPrint { get; set; } = true;
         public int Interval { get; set; } = 1000 * 30;
 
+        private readonly string Version="1.0.0";
         private string DataPath;
         private Configuration Config;
         private Ping ping;
@@ -49,6 +50,7 @@ namespace PlayersMonitor.Modes
         {
             var json = new JObject(
                         new JProperty("type", "CHART:PLAYERS_ONLIE"),
+                        new JProperty("version",Version),
                         new JProperty("date",DateTime.Now.ToString("yyyy-mm-dd")),
                         new JProperty("server_host",Config.ServerHost),
                         new JProperty("server_port",Config.ServerPort),
