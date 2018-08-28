@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using System.Threading;
-using MinecraftProtocol.DataType;
 
 namespace PlayersMonitor
 {
@@ -13,7 +12,6 @@ namespace PlayersMonitor
         public delegate void PlayerDisconnectedEvntHandler(Player player);
         public event PlayerDisconnectedEvntHandler PlayerDisconnectedEvent;
         public event PlayerJoinedEvntHandler PlayerJoinedEvnt;
-
 
         public bool? IsOnlineMode;
 
@@ -102,9 +100,10 @@ namespace PlayersMonitor
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
-            foreach (var item in PlayersList)
+            foreach (var player in PlayersList)
             {
-                sb.Append($"{item.ToString()}\r\n");
+                sb.Append($"{player.ToString()}{Environment.NewLine}");
+                sb.Append("---------------------------------");
             }
            return sb.ToString();
         }
@@ -163,14 +162,13 @@ namespace PlayersMonitor
                 else
                     throw new ArgumentNullException("Uuid or Name");
             }
-
             public override string ToString()
             {
                 StringBuilder sb = new StringBuilder();
-                sb.Append($"Name:{Name},");
-                sb.Append($"id:{Uuid.ToString()}");
-                sb.Append($"Blood:{Blood}");
-                sb.Append($"ScreenTag:{ScreenTag}");
+                sb.Append($"PlayerName:{Name}{Environment.NewLine}");
+                sb.Append($"uuid:{Uuid.ToString()}{Environment.NewLine}");
+                sb.Append($"Blood:{Blood}{Environment.NewLine}");
+                sb.Append($"ScreenTag:{ScreenTag}{Environment.NewLine}");
                 return sb.ToString();
             }
         }

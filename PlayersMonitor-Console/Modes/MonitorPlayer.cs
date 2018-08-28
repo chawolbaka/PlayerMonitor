@@ -24,7 +24,22 @@ namespace PlayersMonitor.Modes
             Status = Statuses.Initializing;
             Config = config != null ? config : throw new ArgumentNullException(nameof(config));
             PlayerManager = manager != null ? manager : throw new ArgumentNullException(nameof(manager));
-            ping = new Ping(Config.ServerHost, Config.ServerPort);
+            try
+            {
+                ping = new Ping(Config.ServerHost, Config.ServerPort);
+            }
+            catch (SocketException se)
+            {
+                if (se.SocketErrorCode==SocketError.HostNotFound)
+                {
+                    Screen.Clear();
+                    Screen.WriteLine("&c错误&r:&f你输入的服务器地址不存在");
+                    Screen.WriteLine($"&e详细信息&r:&4{se.ToString()}");
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        Console.ReadKey(true);
+                    Environment.Exit(-1);
+                }
+            }
         }
         public void Start()
         {
@@ -44,26 +59,24 @@ namespace PlayersMonitor.Modes
 
         private void StartPrintInfo(object obj)
         {
-
             Ping Ping = obj as Ping;
-            try {
-                string Tag_S = "", Tag_C = "";
-                while (Status == Statuses.Running)
+            string Tag_S = "", Tag_C = "";
+            while (Status == Statuses.Running)
+            {
+                //获取Ping信息
+                PingReply PingResult = ExceptionHandler(Ping.Send);
+                if (PingResult == null) return;
+                //开始输出信息
+                float? Time = PingResult.Time / 10000.0f;
+                Console.Title = Config.TitleStyle.
+                    Replace("$IP", Config.ServerHost).
+                    Replace("$PORT", Config.ServerPort.ToString()).
+                    Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{(~new Random().Next(1, 233)) + 1}");
+                if (IsFirstPrint)
                 {
-                    //获取Ping信息
-                    PingReply PingResult = ExceptionHandler(Ping.Send);
-                    if (PingResult == null) return;
-                    //开始输出信息
-                    float? Time = PingResult.Time / 10000.0f;
-                    Console.Title = Config.TitleStyle.
-                        Replace("$IP", Config.ServerHost).
-                        Replace("$PORT", Config.ServerPort.ToString()).
-                        Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{(~new Random().Next(1, 233)) + 1}");
-                    if (IsFirstPrint)
-                    {
-                        Screen.Clear();
-                        Tag_S = Screen.CreateLine("服务端版本:", "");
-                        Tag_C = Screen.CreateLine("在线人数:", "");
+                    Screen.Clear();
+                    Tag_S = Screen.CreateLine("服务端版本:", "");
+                    Tag_C = Screen.CreateLine("在线人数:", "");
 #if DoNet
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && 
                         !string.IsNullOrWhiteSpace(PingResult.Icon))
@@ -81,28 +94,21 @@ namespace PlayersMonitor.Modes
                         }
                     }
 #endif
-                        IsFirstPrint = false;
-                    }
-                    Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_S);
-                    Screen.ReviseField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_C);
-                    if (PingResult.Player.Samples != null)
-                    {
-                        foreach (var player in PingResult.Player.Samples)
-                        {
-                            PlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
-                        }
-                    }
-                    PlayerManager.LifeTimer();
-                    Thread.Sleep(Config.SleepTime + new Random().Next(0, 256));
+                    IsFirstPrint = false;
                 }
-                return;
+                Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_S);
+                Screen.ReviseField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_C);
+                if (PingResult.Player.Samples != null)
+                {
+                    foreach (var player in PingResult.Player.Samples)
+                    {
+                        PlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
+                    }
+                }
+                PlayerManager.LifeTimer();
+                Thread.Sleep(Config.SleepTime + new Random().Next(0, 256));
             }
-            catch
-            {
-                Console.WriteLine($"Time:{DateTime.Now}");
-                Console.WriteLine(PlayerManager.ToString());
-                throw;
-            }
+            return;
         }
         private string GetServerVersionNameColor(string serverVersionName)
         {
@@ -144,9 +150,10 @@ namespace PlayersMonitor.Modes
                     //如果能恢复的话屏幕那边需要重新初始化,所以这边清理(初始化)一下
                     Screen.Clear();
                     IsFirstPrint = true;
-                    if (e.ErrorCode == (int)SocketError.HostNotFound)
+                    if (e.SocketErrorCode == SocketError.HostNotFound)
                     {
                         //我没找到linux上这个错误的错误代码...
+                        //这边好像不需要处理了?大概是不会到这边才出现错误的吧?
                         Console.BackgroundColor = ConsoleColor.Red;
                         Console.WriteLine("服务器地址错误(找不到这个地址)");
                         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
