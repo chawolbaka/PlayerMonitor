@@ -1,5 +1,3 @@
 bin
 obj
-Properties
 *.exe
-*.ps1
