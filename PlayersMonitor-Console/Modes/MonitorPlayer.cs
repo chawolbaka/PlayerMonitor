@@ -3,16 +3,27 @@ using System.Threading;
 using System.Net.Sockets;
 using MinecraftProtocol.Utils;
 using MinecraftProtocol.DataType;
-using System.Runtime.InteropServices;
 using Newtonsoft.Json;
+#if !DoNet
+using System.Runtime.InteropServices;
+#endif
 #if DoNet
 using System.Drawing;
+using System.IO;
 #endif
 
 namespace PlayersMonitor.Modes
 {
     public class MonitorPlayer:Mode
     {
+#if !DoNet
+        private static bool IsWindows { get { return RuntimeInformation.IsOSPlatform(OSPlatform.Windows); } }
+#elif Windows
+        private static bool IsWindows { get { return true; } }
+#else
+        private static bool IsWindows { get { return false; } }
+#endif
+
         private delegate PingReply Run();
         private Configuration Config;
         private PlayersManager PlayerManager;
@@ -35,7 +46,7 @@ namespace PlayersMonitor.Modes
                     Screen.Clear();
                     Screen.WriteLine("&c错误&r:&f你输入的服务器地址不存在");
                     Screen.WriteLine($"&e详细信息&r:&4{se.ToString()}");
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    if (IsWindows)
                         Console.ReadKey(true);
                     Environment.Exit(-1);
                 }
@@ -78,8 +89,7 @@ namespace PlayersMonitor.Modes
                     Tag_S = Screen.CreateLine("服务端版本:", "");
                     Tag_C = Screen.CreateLine("在线人数:", "");
 #if DoNet
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && 
-                        !string.IsNullOrWhiteSpace(PingResult.Icon))
+                    if (!string.IsNullOrWhiteSpace(PingResult.Icon))
                     {
                         byte[] Icon_bytes = Convert.FromBase64String(
                             PingResult.Icon.Replace("data:image/png;base64,", ""));
@@ -156,14 +166,15 @@ namespace PlayersMonitor.Modes
                         //这边好像不需要处理了?大概是不会到这边才出现错误的吧?
                         Console.BackgroundColor = ConsoleColor.Red;
                         Console.WriteLine("服务器地址错误(找不到这个地址)");
-                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        if (IsWindows)
                             Console.ReadKey(true);
                         Environment.Exit(-1);
+
                     }
                     else
                     {
                         PrintTime(ref FirstTime);
-                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        if (IsWindows)
                         {
                             Console.Title = $"网络发生了一点错误(qwq不要怕!可能过一会就可以恢复啦)";
                             Screen.WriteLine($"&c错误信息&r:&c{e.Message}&e(&c错误代码&f:&c{e.ErrorCode}&e)");
@@ -248,7 +259,7 @@ namespace PlayersMonitor.Modes
             else
             {
                 Console.WriteLine($"已到达最大重试次数({maxTick})");
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (IsWindows)
                     Console.ReadKey(true);
                 Environment.Exit(-1);
             }

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Text;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using System.IO;
 using PlayersMonitor.Modes;
-using System.Collections.Generic;
+#if !DoNet
+using System.Runtime.InteropServices;
+#endif
 
 namespace PlayersMonitor
 {
@@ -15,7 +15,9 @@ namespace PlayersMonitor
 
         private static Configuration Config;
         private static PlayersManager PlayerManager;
+#if !DoNet
         private static bool IsWindows { get { return RuntimeInformation.IsOSPlatform(OSPlatform.Windows); } }
+#endif
         //private static readonly string ConfigFilePath = "Config.xml";
 
         static void Main(string[] args)
@@ -37,6 +39,7 @@ namespace PlayersMonitor
             }
 
             //Olny Windows Support this
+#if !DoNet
             while (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 ConsoleKeyInfo Input = Console.ReadKey(true);
@@ -47,9 +50,11 @@ namespace PlayersMonitor
                 }
 
             }
+#endif
         }
         private static void Initializing()
         {
+#if !DoNet
             if (!IsWindows)
             {
                 //我改成UTF-8好像在一些Windows下会乱码,所以我暂时不改Windows的了
@@ -57,6 +62,7 @@ namespace PlayersMonitor
                 Console.InputEncoding = Encoding.UTF8;
                 Console.OutputEncoding = Encoding.UTF8;
             }
+#endif
             Config = Configuration.Load(Environment.GetCommandLineArgs());
             PlayerManager = new PlayersManager(Config);
             Console.CancelKeyPress += ControlC_Handler;

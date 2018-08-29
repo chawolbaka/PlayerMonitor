@@ -142,7 +142,7 @@ namespace PlayersMonitor
         {
             int buff_top = Console.CursorTop;
             int buff_left = Console.CursorLeft;
-            bool HasColorCode = s.Contains('&');
+            bool HasColorCode = s.Contains("&");
             Console.CursorVisible = false;
             Console.SetCursorPosition(x, y);
             if (HasColorCode)
