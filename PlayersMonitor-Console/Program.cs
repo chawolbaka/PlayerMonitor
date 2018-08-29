@@ -21,8 +21,7 @@ namespace PlayersMonitor
         static void Main(string[] args)
         {
             Initializing();
-            Config.ServerHost = "127.0.0.1";
-            Config.ServerPort = 12560;
+			
             switch (Config.RunningMode)
             {
                 case Mode.Type.Chart:
