@@ -162,7 +162,7 @@ namespace PlayersMonitor.Modes
                     }
                     else
                     {
-                        PrintTime(FirstTime);
+                        PrintTime(ref FirstTime);
                         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                         {
                             Console.Title = $"网络发生了一点错误(qwq不要怕!可能过一会就可以恢复啦)";
@@ -203,7 +203,7 @@ namespace PlayersMonitor.Modes
                             continue;
                         }
                     }
-                    PrintTime(FirstTime);
+                    PrintTime(ref FirstTime);
                     Screen.WriteLine("&cjson解析错误&f:&r服务器返回了一个无法被解析的json");
                     if (Result != null)
                     {
@@ -235,7 +235,7 @@ namespace PlayersMonitor.Modes
             Screen.Clear();
             IsFirstPrint = true;
             //Print Info
-            PrintTime(firstTime);
+            PrintTime(ref firstTime);
             Screen.WriteLine($"&e详细信息&r:&c{e.ToString()}");
             RetryHandler(ref retryTime, ref tryTick, maxTryTick);
         }
@@ -257,7 +257,7 @@ namespace PlayersMonitor.Modes
             if (tick > maxTick / 2)
             {
                 retryTime += new Random().Next(233 * 2, 33333 * 3);
-                retryTime -= new Random().Next(23 * 3, 33333 * 3);
+                retryTime -= new Random().Next(2, 33333*3);
             }
             else
             {
@@ -270,12 +270,18 @@ namespace PlayersMonitor.Modes
             tick++;
             Console.WriteLine("时间到,正在重试...");
         }
-        private void PrintTime(DateTime? firstTime)
+        private void PrintTime(ref DateTime? firstTime)
         {
             if (firstTime == null)
+            {
                 firstTime = DateTime.Now;
-            Screen.WriteLine($"&f发生时间(首次)&r:&e{firstTime.ToString()}");
-            Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
+                Screen.WriteLine($"&f发生时间&r:&e{firstTime.ToString()}");
+            }
+            else
+            {
+                Screen.WriteLine($"&f发生时间(首次)&r:&e{firstTime.ToString()}");
+                Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
+            }
         }
     }
 }
