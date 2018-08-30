@@ -23,7 +23,7 @@
   
   <ItemGroup>
     <Reference Include="MinecraftProtocol">
-      <HintPath>Dependence\MinecraftProtocol\MinecraftProtocol.dll</HintPath>
+      <HintPath>Dependence\MinecraftProtocol.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <HintPath>System</HintPath>
