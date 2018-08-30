@@ -15,32 +15,25 @@ namespace PlayersMonitor
 
         private static Configuration Config;
         private static PlayersManager PlayerManager;
+        private static Mode MainMode;
 #if !DoNet
-        private static bool IsWindows { get { return RuntimeInformation.IsOSPlatform(OSPlatform.Windows); } }
+        private static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+#elif Windows
+        private static bool IsWindows { get { return true; } }
+#else
+        private static bool IsWindows { get { return false; } }
 #endif
-        //private static readonly string ConfigFilePath = "Config.xml";
 
         static void Main(string[] args)
         {
-            Initializing();
-			
-            switch (Config.RunningMode)
-            {
-                case Mode.Type.Chart:
-                    throw new NotImplementedException("not support now");
-                    //string tag= GetServerTag("Data",Config.ServerHost, Config.ServerPort);
-                    //Chart ChartMode = new Chart(Config,$"Data/{tag}");
-                    //ChartMode.StartAsync();
-                    //break;
-                case Mode.Type.Monitor:
-                    MonitorPlayer Monitor = new MonitorPlayer(Config, PlayerManager);
-                    Monitor.StartAsync();
-                    break;
-            }
+            Initializing();//初始化启动参数
+
+            MainMode = CrerteMode(Config.RunningMode);//创建主模式的实例
+            MainMode.StartAsync();
+
 
             //Olny Windows Support this
-#if !DoNet
-            while (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            while (IsWindows)
             {
                 ConsoleKeyInfo Input = Console.ReadKey(true);
                 if (Input.Key == ConsoleKey.Q || Input.Key == ConsoleKey.Escape)
@@ -48,13 +41,10 @@ namespace PlayersMonitor
                     Console.CursorVisible = true;
                     Environment.Exit(0);
                 }
-
             }
-#endif
         }
         private static void Initializing()
         {
-#if !DoNet
             if (!IsWindows)
             {
                 //我改成UTF-8好像在一些Windows下会乱码,所以我暂时不改Windows的了
@@ -62,7 +52,6 @@ namespace PlayersMonitor
                 Console.InputEncoding = Encoding.UTF8;
                 Console.OutputEncoding = Encoding.UTF8;
             }
-#endif
             Config = Configuration.Load(Environment.GetCommandLineArgs());
             PlayerManager = new PlayersManager(Config);
             Console.CancelKeyPress += ControlC_Handler;
@@ -159,6 +148,19 @@ namespace PlayersMonitor
                 Config.ServerPort = tmp;
             }
 #endif
+        }
+        private static Mode CrerteMode(Mode.Type modeType)
+        {
+            switch (modeType)
+            {
+                case Mode.Type.Chart:
+                    throw new NotImplementedException("not support now");
+                    //string tag = GetServerTag("Data", Config.ServerHost, Config.ServerPort);
+                    //return null;
+                case Mode.Type.Monitor:
+                    return new MonitorPlayer(Config, PlayerManager);
+                default: return null;
+            }
         }
         private static void ControlC_Handler(object sender, ConsoleCancelEventArgs args)
         {

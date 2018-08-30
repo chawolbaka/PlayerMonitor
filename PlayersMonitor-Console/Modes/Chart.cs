@@ -26,7 +26,7 @@ namespace PlayersMonitor.Modes
             DataPath = string.IsNullOrWhiteSpace(path) != true ? path : throw new ArgumentNullException(nameof(path));
             ping = new Ping(Config.ServerHost, Config.ServerPort);
         }
-        public void Start()
+        public override void Start()
         {
             Status = Statuses.Running;
             
@@ -44,7 +44,7 @@ namespace PlayersMonitor.Modes
                 Thread.Sleep(Interval);
             }
         }
-        public void StartAsync() => new Thread(x => Start()).Start();
+        public override void StartAsync() => new Thread(x => Start()).Start();
         
         private void CreateJson(string fileName,PingReply pingInfo)
         {

@@ -18,7 +18,8 @@ namespace PlayersMonitor.Modes
         }
         protected Statuses Status { get; set; }
 
-        //public abstract void Start();
-        
+        public abstract void Start();
+        public abstract void StartAsync();
+
     }
 }

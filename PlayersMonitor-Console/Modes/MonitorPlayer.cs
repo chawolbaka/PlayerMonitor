@@ -6,8 +6,7 @@ using MinecraftProtocol.DataType;
 using Newtonsoft.Json;
 #if !DoNet
 using System.Runtime.InteropServices;
-#endif
-#if DoNet
+#else
 using System.Drawing;
 using System.IO;
 #endif
@@ -17,7 +16,7 @@ namespace PlayersMonitor.Modes
     public class MonitorPlayer:Mode
     {
 #if !DoNet
-        private static bool IsWindows { get { return RuntimeInformation.IsOSPlatform(OSPlatform.Windows); } }
+        private static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 #elif Windows
         private static bool IsWindows { get { return true; } }
 #else
@@ -52,12 +51,12 @@ namespace PlayersMonitor.Modes
                 }
             }
         }
-        public void Start()
+        public override void Start()
         {
             Status = Statuses.Running;
             StartPrintInfo(ping);
         }
-        public void StartAsync()
+        public override void StartAsync()
         {
             Status = Statuses.Running;
             Thread PrintThread = new Thread(StartPrintInfo);
@@ -253,7 +252,7 @@ namespace PlayersMonitor.Modes
         private void RetryHandler(ref int retryTime, ref int tick,int maxTick)
         {
             if (tick == 0)
-                Screen.Write($"将在&f{(retryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");
+                Screen.WriteLine($"将在&f{(retryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");
             else if (tick < maxTick)
                 Screen.WriteLine($"&e已重试&r:&f{tick}次,{(retryTime / 1000.0f).ToString("F2")}秒后将继续尝试去重新连接服务器");
             else
