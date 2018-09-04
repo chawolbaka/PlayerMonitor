@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 
 namespace PlayersMonitor.Modes
 {
@@ -13,6 +12,7 @@ namespace PlayersMonitor.Modes
         protected enum Statuses
         {
             Initializing,
+            Initialized,
             Running,
             Abort
         }
@@ -20,6 +20,6 @@ namespace PlayersMonitor.Modes
 
         public abstract void Start();
         public abstract void StartAsync();
-
+        
     }
 }
