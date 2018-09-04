@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Text;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using PlayersMonitor.Modes;
-#if !DoNet
-using System.Runtime.InteropServices;
-#endif
 
 namespace PlayersMonitor
 {
@@ -14,15 +10,7 @@ namespace PlayersMonitor
     {
 
         private static Configuration Config;
-        private static PlayersManager PlayerManager;
         private static Mode MainMode;
-#if !DoNet
-        private static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-#elif Windows
-        private static bool IsWindows { get { return true; } }
-#else
-        private static bool IsWindows { get { return false; } }
-#endif
 
         static void Main(string[] args)
         {
@@ -33,7 +21,7 @@ namespace PlayersMonitor
 
 
             //Olny Windows Support this
-            while (IsWindows)
+            while (SystemInfo.IsWindows)
             {
                 ConsoleKeyInfo Input = Console.ReadKey(true);
                 if (Input.Key == ConsoleKey.Q || Input.Key == ConsoleKey.Escape)
@@ -45,7 +33,7 @@ namespace PlayersMonitor
         }
         private static void Initializing()
         {
-            if (!IsWindows)
+            if (!SystemInfo.IsWindows)
             {
                 //我改成UTF-8好像在一些Windows下会乱码,所以我暂时不改Windows的了
                 //(以后添加启动参数更改)
@@ -53,40 +41,11 @@ namespace PlayersMonitor
                 Console.OutputEncoding = Encoding.UTF8;
             }
             Config = Configuration.Load(Environment.GetCommandLineArgs());
-            PlayerManager = new PlayersManager(Config);
             Console.CancelKeyPress += ControlC_Handler;
 
-            //注册玩家上下线的事件
-            if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerJoin))
-            {
-                PlayerManager.PlayerJoinedEvnt += player =>
-                {
-                    string reg = @"^(\S+)( (.*))?$";
-                    ProcessStartInfo StartInfo = new ProcessStartInfo();
-                    StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerJoin, reg, "$1");
-                    if (Config.RunCommandForPlayerJoin.Contains(" "))
-                        StartInfo.Arguments = Regex
-                        .Replace(Config.RunCommandForPlayerJoin, reg, "$3")
-                        .Replace("$PLAYER_NAME", player.Name); ;
-                    Process.Start(StartInfo);
-                };
-            }
-            if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerDisconnected))
-            {
-                PlayerManager.PlayerDisconnectedEvent += player =>
-                {
-                    string reg = @"^(\S+)( (.*))?$";
-                    ProcessStartInfo StartInfo = new ProcessStartInfo();
-                    StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerDisconnected, reg, "$1");
-                    if (Config.RunCommandForPlayerDisconnected.Contains(" "))
-                        StartInfo.Arguments = Regex
-                        .Replace(Config.RunCommandForPlayerDisconnected, reg, "$3")
-                        .Replace("$PLAYER_NAME",player.Name);
-                    Process.Start(StartInfo);
-                };
-            }
+            
             //让用户输入缺失的内容(这东西有点碍事,所以只在发布的时候出现吧)
-#if (!DEBUG)
+#if !DEBUG
             if (string.IsNullOrWhiteSpace(Config.ServerHost))
             {
                 Console.Write("服务器地址:");
@@ -158,7 +117,7 @@ namespace PlayersMonitor
                     //string tag = GetServerTag("Data", Config.ServerHost, Config.ServerPort);
                     //return null;
                 case Mode.Type.Monitor:
-                    return new MonitorPlayer(Config, PlayerManager);
+                    return new MonitorPlayer(Config);
                 default: return null;
             }
         }

@@ -4,9 +4,12 @@ using System.Net.Sockets;
 using MinecraftProtocol.Utils;
 using MinecraftProtocol.DataType;
 using Newtonsoft.Json;
-#if !DoNet
-using System.Runtime.InteropServices;
-#else
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.Net;
+using System.Text;
+using System.Collections.Generic;
+#if DoNet
 using System.Drawing;
 using System.IO;
 #endif
@@ -15,28 +18,53 @@ namespace PlayersMonitor.Modes
 {
     public class MonitorPlayer:Mode
     {
-#if !DoNet
-        private static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-#elif Windows
-        private static bool IsWindows { get { return true; } }
-#else
-        private static bool IsWindows { get { return false; } }
-#endif
 
         private delegate PingReply Run();
         private Configuration Config;
-        private PlayersManager PlayerManager;
-        private static bool IsFirstPrint = true;
-        private Ping ping;
+        private PlayersManager MainPlayerManager;
+        private Ping Ping;
+        private bool IsFirstPrint = true;
 
-        public MonitorPlayer(Configuration config, PlayersManager manager)
+        public MonitorPlayer(Configuration config)
         {
             Status = Statuses.Initializing;
             Config = config != null ? config : throw new ArgumentNullException(nameof(config));
-            PlayerManager = manager != null ? manager : throw new ArgumentNullException(nameof(manager));
+            MainPlayerManager = new PlayersManager(config);
+            //注册玩家上下线的事件
+            if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerJoin))
+            {
+                MainPlayerManager.JoinedEvnt += player =>
+                {
+                    string reg = @"^(\S+)( (.*))?$";
+                    ProcessStartInfo StartInfo = new ProcessStartInfo();
+                    StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerJoin, reg, "$1");
+                    if (Config.RunCommandForPlayerJoin.Contains(" "))
+                        StartInfo.Arguments = Regex
+                        .Replace(Config.RunCommandForPlayerJoin, reg, "$3")
+                        .Replace("$PLAYER_NAME", player.Name)
+                        .Replace("$PLAYER_UUID", player.Uuid.ToString());
+                    Process.Start(StartInfo);
+                };
+            }
+            if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerDisconnected))
+            {
+                MainPlayerManager.DisconnectedEvent += player =>
+                {
+                    string reg = @"^(\S+)( (.*))?$";
+                    ProcessStartInfo StartInfo = new ProcessStartInfo();
+                    StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerDisconnected, reg, "$1");
+                    if (Config.RunCommandForPlayerDisconnected.Contains(" "))
+                        StartInfo.Arguments = Regex
+                        .Replace(Config.RunCommandForPlayerDisconnected, reg, "$3")
+                        .Replace("$PLAYER_NAME", player.Name)
+                        .Replace("$PLAYER_UUID",player.Uuid.ToString());
+                    Process.Start(StartInfo);
+                };
+            }
+            //解析服务器地址(如果是域名的话)
             try
             {
-                ping = new Ping(Config.ServerHost, Config.ServerPort);
+                Ping = new Ping(Config.ServerHost, Config.ServerPort);
             }
             catch (SocketException se)
             {
@@ -45,22 +73,23 @@ namespace PlayersMonitor.Modes
                     Screen.Clear();
                     Screen.WriteLine("&c错误&r:&f你输入的服务器地址不存在");
                     Screen.WriteLine($"&e详细信息&r:&4{se.ToString()}");
-                    if (IsWindows)
+                    if (SystemInfo.IsWindows)
                         Console.ReadKey(true);
                     Environment.Exit(-1);
                 }
             }
+            Status = Statuses.Initialized;
         }
         public override void Start()
         {
             Status = Statuses.Running;
-            StartPrintInfo(ping);
+            StartPrintInfo(Ping);
         }
         public override void StartAsync()
         {
             Status = Statuses.Running;
             Thread PrintThread = new Thread(StartPrintInfo);
-            PrintThread.Start(ping);
+            PrintThread.Start(Ping);
         }
         public void Abort()
         {
@@ -111,10 +140,10 @@ namespace PlayersMonitor.Modes
                 {
                     foreach (var player in PingResult.Player.Samples)
                     {
-                        PlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
+                        MainPlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
                     }
                 }
-                PlayerManager.LifeTimer();
+                MainPlayerManager.LifeTimer();
                 Thread.Sleep(Config.SleepTime + new Random().Next(0, 256));
             }
             return;
@@ -165,7 +194,7 @@ namespace PlayersMonitor.Modes
                         //这边好像不需要处理了?大概是不会到这边才出现错误的吧?
                         Console.BackgroundColor = ConsoleColor.Red;
                         Console.WriteLine("服务器地址错误(找不到这个地址)");
-                        if (IsWindows)
+                        if (SystemInfo.IsWindows)
                             Console.ReadKey(true);
                         Environment.Exit(-1);
 
@@ -173,7 +202,7 @@ namespace PlayersMonitor.Modes
                     else
                     {
                         PrintTime(ref FirstTime);
-                        if (IsWindows)
+                        if (SystemInfo.IsWindows)
                         {
                             Console.Title = $"网络发生了一点错误(qwq不要怕!可能过一会就可以恢复啦)";
                             Screen.WriteLine($"&c错误信息&r:&c{e.Message}&e(&c错误代码&f:&c{e.ErrorCode}&e)");
@@ -258,7 +287,7 @@ namespace PlayersMonitor.Modes
             else
             {
                 Console.WriteLine($"已到达最大重试次数({maxTick})");
-                if (IsWindows)
+                if (SystemInfo.IsWindows)
                     Console.ReadKey(true);
                 Environment.Exit(-1);
             }
@@ -291,6 +320,176 @@ namespace PlayersMonitor.Modes
             {
                 Screen.WriteLine($"&f发生时间(首次)&r:&e{firstTime.ToString()}");
                 Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
+            }
+        }
+
+        //好像其它地方用不到,所以改成内部类了.(可能哪天又会改回去
+        private class PlayersManager
+        {
+            public delegate void PlayerJoinedEvntHandler(Player player);
+            public delegate void PlayerDisconnectedEvntHandler(Player player);
+            public event PlayerJoinedEvntHandler JoinedEvnt;
+            public event PlayerDisconnectedEvntHandler DisconnectedEvent;
+
+            public bool? IsOnlineMode;
+
+            private Configuration Config;
+            private List<Player> PlayersList = new List<Player>();
+
+            public PlayersManager(Configuration config)
+            {
+                Config = config ?? throw new ArgumentNullException(nameof(config));
+            }
+            public void Add(string name, Guid uuid)
+            {
+                int DefPlayerBlood = PlayersList.Count < 12 ? 2 : Config.Blood;
+                if (Config == null)
+                    throw new Exception("Not Initializtion");
+                Player FoundPlayer = PlayersList.Find(x => x.Uuid.ToString().Replace("-", "") == uuid.ToString().Replace("-", ""));
+                if (FoundPlayer != null) //如果找到了这个玩家就把它的血恢复到默认值(回血)
+                {
+                    FoundPlayer.Blood = DefPlayerBlood;
+                    //Screen.ReviseLineField($"{GetBloodColor(FoundPlayer.Blood,Config.Blood)}{FoundPlayer.Blood.ToString("D2")}",3,FoundPlayer.ScreenTag);
+                }
+                else if (FoundPlayer == null)
+                {
+                    Player NewPlayer = new Player(name, Guid.Parse(uuid.ToString()), DefPlayerBlood);
+                    if (PlayersList.Count == 0)
+                    {
+                        Thread t = new Thread(iom => IsOnlineMode = NewPlayer.IsOnlineMode());
+                        t.Start();
+                    }
+
+                    //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
+                    NewPlayer.ScreenTag = Screen.CreateLine(
+                        "[", (PlayersList.Count + 1).ToString("D2"), "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{(NewPlayer.Blood - 1).ToString("D2")}", "]",
+                        "Name:", NewPlayer.Name, "(", NewPlayer.Uuid.ToString(), ")");
+                    PlayersList.Add(NewPlayer);
+                    JoinedEvnt?.Invoke(NewPlayer);
+                }
+                //LifeTimer();
+            }
+            public void LifeTimer()
+            {
+                for (int i = 0; i < PlayersList.Count; i++)
+                {
+                    PlayersList[i].Blood--;
+
+                    if (PlayersList[i].Blood == 0)
+                    {
+                        Player PlayerTmp = PlayersList[i];
+                        PlayersList.Remove(PlayersList[i--]);
+                        //从屏幕上移除这个玩家&修改其它玩家的序号(屏幕上的)
+                        Screen.RemoveLine(PlayerTmp.ScreenTag, true);
+                        if (PlayersList.Count > 0)
+                        {
+                            for (int j = 0; j < PlayersList.Count; j++)
+                            {
+                                Screen.ReviseField((j + 1).ToString("D2"), 1, PlayersList[j].ScreenTag);
+                            }
+                        }
+                        DisconnectedEvent?.Invoke(PlayerTmp);
+                    }
+                    else
+                    {
+                        Screen.ReviseField(
+                            $"{GetBloodColor(PlayersList[i].Blood, Config.Blood)}{PlayersList[i].Blood.ToString("D2")}", 3, PlayersList[i].ScreenTag);
+                    }
+                }
+            }
+            private void RestoreHealthForAllPlayer(int? blood = null)
+            {
+                foreach (var Player in PlayersList)
+                {
+                    Player.Blood = blood ?? Config.Blood;
+                    Screen.ReviseField($"&a{Player.Blood.ToString("D2")}", 3, Player.ScreenTag);
+                }
+            }
+            private string GetBloodColor(int nowBlood, int maxBlood)
+            {
+                if (PlayersList.Count <= 12)
+                    return "&a";
+                if (nowBlood <= 1 || nowBlood <= maxBlood / 100.0f * 30)
+                    return "&c";
+                else if (nowBlood <= maxBlood / 100.0f * 48)
+                    return "&e";
+                else
+                    return "&a";
+            }
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (var player in PlayersList)
+                {
+                    sb.Append($"{player.ToString()}{Environment.NewLine}");
+                    sb.Append("---------------------------------");
+                }
+                return sb.ToString();
+            }
+            public class Player
+            {
+                private bool? HasBuyGame = null;
+                private bool OnlineMode;
+                public Guid Uuid { get; set; }
+                public string Name { get; set; }
+                public int Blood { get; set; }
+                public string ScreenTag { get; set; }
+
+                public Player()
+                {
+
+                }
+                public Player(string name, Guid uuid, int blood)
+                {
+                    this.Name = name;
+                    this.Uuid = uuid;
+                    this.Blood = blood;
+                }
+
+
+                /// <summary>
+                /// Need Network
+                /// </summary>
+                public bool? IsOnlineMode()
+                {
+                    // GET https://api.mojang.com/users/profiles/minecraft/<username>
+                    // 通过这个API获取玩家的UUID,然后和Ping返回的UUID匹配如果不一样的话就是离线模式了
+                    if (Uuid != null && !string.IsNullOrWhiteSpace(Name))
+                    {
+                        //缓存
+                        if (HasBuyGame != null && HasBuyGame == true)
+                            return OnlineMode;
+                        else if (HasBuyGame != null && HasBuyGame != true)
+                            return false;
+                        //没有缓存的话就去通过API获取
+                        try
+                        {
+                            WebClient wc = new WebClient();
+                            string html = Encoding.UTF8.GetString(wc.DownloadData(
+                                @"https://api.mojang.com/users/profiles/minecraft/" + Name));
+                            HasBuyGame = !string.IsNullOrWhiteSpace(html);
+                            if (HasBuyGame != true)
+                                return null;
+                            OnlineMode = html.Contains(Uuid.ToString().Replace("-", string.Empty));
+                            return OnlineMode;
+                        }
+                        catch
+                        {
+                            return null;
+                        }
+                    }
+                    else
+                        throw new ArgumentNullException("Uuid or Name");
+                }
+                public override string ToString()
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append($"PlayerName:{Name}{Environment.NewLine}");
+                    sb.Append($"uuid:{Uuid.ToString()}{Environment.NewLine}");
+                    sb.Append($"Blood:{Blood}{Environment.NewLine}");
+                    sb.Append($"ScreenTag:{ScreenTag}{Environment.NewLine}");
+                    return sb.ToString();
+                }
             }
         }
     }
