@@ -19,6 +19,9 @@ namespace PlayersMonitor.Modes
     public class MonitorPlayer:Mode
     {
 
+        public override string Name { get { return nameof(MonitorPlayer); } }
+        public override string Description { get { return "QAQ反正没人用,懒的写介绍了"; } }
+
         private delegate PingReply Run();
         private Configuration Config;
         private PlayersManager MainPlayerManager;
@@ -99,23 +102,23 @@ namespace PlayersMonitor.Modes
         private void StartPrintInfo(object obj)
         {
             Ping Ping = obj as Ping;
-            string Tag_S = "", Tag_C = "";
+            string Tag_SERVER_VERSION = "", Tag_ONLINE_COUNT = "";
             while (Status == Statuses.Running)
             {
                 //获取Ping信息
                 PingReply PingResult = ExceptionHandler(Ping.Send);
                 if (PingResult == null) return;
                 //开始输出信息
-                float? Time = PingResult.Time / 10000.0f;
+                float? Time = PingResult.Time / 10000.0f;//有点好奇这里我/10000了的话它是null是不是会报错呀...
                 Console.Title = Config.TitleStyle.
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
-                    Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{(~new Random().Next(1, 233)) + 1}");
+                    Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{short.MinValue}");
                 if (IsFirstPrint)
                 {
                     Screen.Clear();
-                    Tag_S = Screen.CreateLine("服务端版本:", "");
-                    Tag_C = Screen.CreateLine("在线人数:", "");
+                    Tag_SERVER_VERSION = Screen.CreateLine("服务端版本:", "");
+                    Tag_ONLINE_COUNT = Screen.CreateLine("在线人数:", "");
 #if DoNet
                     if (!string.IsNullOrWhiteSpace(PingResult.Icon))
                     {
@@ -134,8 +137,8 @@ namespace PlayersMonitor.Modes
 #endif
                     IsFirstPrint = false;
                 }
-                Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_S);
-                Screen.ReviseField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_C);
+                Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_SERVER_VERSION);
+                Screen.ReviseField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_ONLINE_COUNT);
                 if (PingResult.Player.Samples != null)
                 {
                     foreach (var player in PingResult.Player.Samples)
