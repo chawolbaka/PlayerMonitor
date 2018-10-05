@@ -9,6 +9,7 @@ namespace PlayersMonitor
     
     class Program
     {
+        public static bool UseCompatibilityMode = true;//之后在处理这个先直接全部兼容模式
 
         private static Configuration Config;
         private static Mode MainMode;
@@ -34,16 +35,20 @@ namespace PlayersMonitor
         }
         private static void Initializing()
         {
-            if (!SystemInfo.IsWindows)
+            //在一些Windows下不知道为什么会乱码/字显示不全这样子的问题,只有在非兼容模式下修改编码
+            if (!UseCompatibilityMode)
             {
-                //我改成UTF-8好像在一些Windows下会乱码,所以我暂时不改Windows的了
-                //(以后添加启动参数更改)
                 Console.InputEncoding = Encoding.UTF8;
                 Console.OutputEncoding = Encoding.UTF8;
             }
-            Config = Configuration.Load(Environment.GetCommandLineArgs());
-            Console.CancelKeyPress += ControlC_Handler;
 
+            Config = Configuration.Load(Environment.GetCommandLineArgs());
+
+            Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs args) {
+                //这边可能需要try一下,以前有一行注释说这里在bash下会报错
+                if (args.SpecialKey == ConsoleSpecialKey.ControlC)
+                    Exit();
+            };
             
             //让用户输入缺失的内容(这东西有点碍事,所以只在发布的时候出现吧)
 #if !DEBUG
@@ -122,24 +127,12 @@ namespace PlayersMonitor
                 default: return null;
             }
         }
-        private static void ControlC_Handler(object sender, ConsoleCancelEventArgs args)
+        private static void Exit()
         {
-            try
-            {
-                if (args.SpecialKey == ConsoleSpecialKey.ControlC)
-                {
-                    //因为在修改控制台中的文字时会暂时隐藏光标
-                    //所以有概率在还没有改回来的状态下就被用户按下Ctrl+c然后光标就没了所以这边需要恢复一下
-                    Console.CursorVisible = true;
-                }
-            }
-            catch (Exception)
-            {
-                //不知道为什么我在bash下按会出现异常,所以暂时直接丢掉异常信息吧
-#if DEBUG
-                throw;
-#endif
-            }
+            //因为在修改控制台中的文字时会暂时隐藏光标
+            //所以有概率在还没有改回来的状态下就被用户按下Ctrl+c然后光标就没了所以这边需要恢复一下
+            Console.CursorVisible = true;
+            Environment.Exit(0);
         }
     }
 }
