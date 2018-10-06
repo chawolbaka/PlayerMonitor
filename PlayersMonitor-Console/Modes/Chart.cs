@@ -11,6 +11,9 @@ namespace PlayersMonitor.Modes
 {
     public class Chart:Mode
     {
+        public override string Name => nameof(Chart);
+        public override string Description => "每x分钟记录下玩家的数量,存储成json(仅存储)";
+
         public bool IsPrint { get; set; } = true;
         public int Interval { get; set; } = 1000 * 30;
 
