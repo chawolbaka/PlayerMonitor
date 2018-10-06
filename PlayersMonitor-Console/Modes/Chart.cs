@@ -14,9 +14,10 @@ namespace PlayersMonitor.Modes
         public override string Name => nameof(Chart);
         public override string Description => "每x分钟记录下玩家的数量,存储成json(仅存储)";
 
-        public bool IsPrint { get; set; } = true;
+        public bool ToPrintInfo { get; set; } = true;
         public int Interval { get; set; } = 1000 * 30;
 
+        //我不知道应该有什么名字,json里面的字段名我可能会修改所以需要一个版本号
         private readonly string Version="1.0.0";
         private string DataPath;
         private Configuration Config;
@@ -41,7 +42,7 @@ namespace PlayersMonitor.Modes
                 string FileName= Path.Combine(DataPath, $"{DateTime.Now.ToString("yyyy-MM-dd")}.json");
                 if (File.Exists(FileName) == false)
                     CreateJson(FileName,PingResult);
-                if (IsPrint)
+                if (ToPrintInfo)
                     Console.WriteLine($"[{DateTime.Now.ToString()}]玩家数量:{PingResult.Player.Online}");
                 WriteData(FileName,PingResult);
                 Thread.Sleep(Interval);
