@@ -68,11 +68,11 @@ namespace PlayersMonitor
                 {
                     TitleStyle = args[i + 1];
                 }
-                else if (args[i] == "-r"|| args[i].ToLower() == "--run-joined" && args.Length >= i + 1)
+                else if (args[i] == "-r"|| args[i].ToLower() == "--script-logged" && args.Length >= i + 1)
                 {
                     RunCommandForPlayerJoin = args[i + 1];
                 }
-                else if (args[i].ToLower() == "--run-disconnected" && args.Length >= i + 1)
+                else if (args[i].ToLower() == "--script-loggedout" && args.Length >= i + 1)
                 {
                     RunCommandForPlayerDisconnected = args[i + 1];
                 }
