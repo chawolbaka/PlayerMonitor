@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 
 namespace PlayersMonitor
@@ -9,6 +10,12 @@ namespace PlayersMonitor
     internal static class Screen
     {
         private static List<Line> Lines = new List<Line>();
+#if Windows
+        public static int SetForegroundColor(Color foregroundColor)=>
+            WinAPI.ReplaceConsoleColor(ConsoleColor.Gray, foregroundColor.R, foregroundColor.G, foregroundColor.B);
+        public static int SetBackgroundColor(Color backgroundColor)=>
+            WinAPI.ReplaceConsoleColor(ConsoleColor.Black, backgroundColor.R, backgroundColor.G, backgroundColor.B);
+#endif
 
         public static string CreateLine(params string[] fields)
         {
