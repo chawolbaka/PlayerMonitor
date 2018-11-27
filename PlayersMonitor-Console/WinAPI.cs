@@ -1,5 +1,4 @@
-﻿#if Windows
-using System;
+﻿using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
@@ -95,6 +94,12 @@ namespace PlayersMonitor
         const int STD_OUTPUT_HANDLE = -11;                                        // per WinBase.h
         internal static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);    // per WinBase.h
         
+        static WinAPI()
+        {
+            if (!SystemInfo.IsWindows)
+                throw new PlatformNotSupportedException("Windows Only.");
+        }
+
         /// <summary>
         /// Set a specific console color to an RGB color 
         /// </summary>
@@ -180,4 +185,3 @@ namespace PlayersMonitor
         }
     }
 }
-#endif

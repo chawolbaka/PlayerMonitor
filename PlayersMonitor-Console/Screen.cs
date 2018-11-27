@@ -10,12 +10,20 @@ namespace PlayersMonitor
     internal static class Screen
     {
         private static List<Line> Lines = new List<Line>();
-#if Windows
-        public static int SetForegroundColor(Color foregroundColor)=>
-            WinAPI.ReplaceConsoleColor(ConsoleColor.Gray, foregroundColor.R, foregroundColor.G, foregroundColor.B);
-        public static int SetBackgroundColor(Color backgroundColor)=>
-            WinAPI.ReplaceConsoleColor(ConsoleColor.Black, backgroundColor.R, backgroundColor.G, backgroundColor.B);
-#endif
+        public static int SetForegroundColor(Color foregroundColor)
+        {
+            if (!SystemInfo.IsWindows)
+                throw new PlatformNotSupportedException("it need WinAPI");
+            else
+                return WinAPI.ReplaceConsoleColor(ConsoleColor.Gray, foregroundColor.R, foregroundColor.G, foregroundColor.B);
+        }
+        public static int SetBackgroundColor(Color backgroundColor)
+        {
+            if (!SystemInfo.IsWindows)
+                throw new PlatformNotSupportedException("it need WinAPI");
+            else
+                return WinAPI.ReplaceConsoleColor(ConsoleColor.Black, backgroundColor.R, backgroundColor.G, backgroundColor.B);
+        }
 
         public static string CreateLine(params string[] fields)
         {
