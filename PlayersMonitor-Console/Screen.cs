@@ -37,7 +37,7 @@ namespace PlayersMonitor
             }
             else
             {
-                //后面一片白眼睛看着好难受，可能有哪里学写了。
+                //后面一片白眼睛看着好难受，可能有哪里写错了。
                 WinAPI.ReplaceConsoleColor(System.ConsoleColor.Black, newColorScheme.Black.R, newColorScheme.Black.G, newColorScheme.Black.B);
                 WinAPI.ReplaceConsoleColor(System.ConsoleColor.Blue, newColorScheme.BrightBlue.R, newColorScheme.BrightBlue.G, newColorScheme.BrightBlue.B);
                 WinAPI.ReplaceConsoleColor(System.ConsoleColor.Cyan, newColorScheme.BrightCyan.R, newColorScheme.BrightCyan.G, newColorScheme.BrightCyan.B);
