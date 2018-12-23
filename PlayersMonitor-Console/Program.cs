@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.Text;
 using System.Text.RegularExpressions;
 using PlayersMonitor.Modes;
@@ -16,8 +18,9 @@ namespace PlayersMonitor
 
         static void Main(string[] args)
         {
-            Initializing();//初始化启动参数
+            Screen.SetColorScheme(new ConsoleRewrite.ColorSchemes.MinecraftColorScheme());
 
+            Initializing();//初始化启动参数
             MainMode = CrerteMode(Config.RunningMode);//创建主模式的实例
             MainMode.StartAsync();
 
