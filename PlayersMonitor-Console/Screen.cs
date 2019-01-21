@@ -2,7 +2,7 @@
 using System.Text;
 using System.Drawing;
 using System.Collections.Generic;
-using PlayersMonitor.ConsoleRewrite.ColorSchemes;
+using PlayersMonitor.ConsolePlus.ColorSchemes;
 
 namespace PlayersMonitor
 {

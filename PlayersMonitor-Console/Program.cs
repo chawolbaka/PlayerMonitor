@@ -18,7 +18,7 @@ namespace PlayersMonitor
 
         static void Main(string[] args)
         {
-            Screen.SetColorScheme(new ConsoleRewrite.ColorSchemes.MinecraftColorScheme());
+            Screen.SetColorScheme(new ConsolePlus.ColorSchemes.MinecraftColorScheme());
 
             Initializing();//初始化启动参数
             MainMode = CrerteMode(Config.RunningMode);//创建主模式的实例
