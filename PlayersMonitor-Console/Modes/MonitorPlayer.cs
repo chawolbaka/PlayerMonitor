@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 using System.Net;
 using System.Text;
 using System.Collections.Generic;
+using System.Linq;
+using PlayersMonitor.ConsoleOptions;
 #if DoNet
 using System.Drawing;
 using System.IO;
@@ -16,19 +18,19 @@ using System.IO;
 
 namespace PlayersMonitor.Modes
 {
-    public class MonitorPlayer:Mode
+    public class MonitorPlayer : Mode
     {
 
         public override string Name { get { return nameof(MonitorPlayer); } }
         public override string Description { get { return "QAQ反正没人用,懒的写介绍了"; } }
 
         private delegate PingReply Run();
-        private Configuration Config;
+        private MonitorPlayerConfig Config;
         private PlayersManager MainPlayerManager;
         private Ping Ping;
         private bool IsFirstPrint = true;
 
-        public MonitorPlayer(Configuration config)
+        public MonitorPlayer(MonitorPlayerConfig config)
         {
             Status = Statuses.Initializing;
             Config = config != null ? config : throw new ArgumentNullException(nameof(config));
@@ -60,7 +62,7 @@ namespace PlayersMonitor.Modes
                         StartInfo.Arguments = Regex
                         .Replace(Config.RunCommandForPlayerDisconnected, reg, "$3")
                         .Replace("$PLAYER_NAME", player.Name)
-                        .Replace("$PLAYER_UUID",player.Uuid.ToString());
+                        .Replace("$PLAYER_UUID", player.Uuid.ToString());
                     Process.Start(StartInfo);
                 };
             }
@@ -71,7 +73,7 @@ namespace PlayersMonitor.Modes
             }
             catch (SocketException se)
             {
-                if (se.SocketErrorCode==SocketError.HostNotFound)
+                if (se.SocketErrorCode == SocketError.HostNotFound)
                 {
                     Screen.Clear();
                     Screen.WriteLine("&c错误&r:&f你输入的服务器地址不存在");
@@ -110,7 +112,7 @@ namespace PlayersMonitor.Modes
                 if (PingResult == null) return;
                 //开始输出信息
                 float? Time = PingResult.Time / 10000.0f;//有点好奇这里我/10000了的话它是null是不是会报错呀...
-                Console.Title = Config.TitleStyle.
+                Console.Title = Config.WindowTitleStyle.
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
                     Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{short.MinValue}");
@@ -171,19 +173,19 @@ namespace PlayersMonitor.Modes
             int RetryTime = 1000 * 6;
             int TryTick = 0;
             int MaxTryTick = ushort.MaxValue;
-            while (Status!= Statuses.Abort)
+            while (Status != Statuses.Abort)
             {
-                PingReply Result=null;
+                PingReply Result = null;
                 try
                 {
                     Result = run();
-                    if (Result!=null)
+                    if (Result != null)
                     {
                         FirstTime = null;
                         TryTick = 0;
                         return Result;
                     }
-                    else 
+                    else
                         throw new NullReferenceException("Reply is null");
                 }
                 catch (SocketException e)
@@ -226,11 +228,11 @@ namespace PlayersMonitor.Modes
                     Screen.Clear();
                     if (je is JsonSerializationException)
                     {
-                        string ErrorJson  = Result?.ToString();
-                        if (!string.IsNullOrWhiteSpace(ErrorJson)&&
+                        string ErrorJson = Result?.ToString();
+                        if (!string.IsNullOrWhiteSpace(ErrorJson) &&
                             ErrorJson.Contains("Server is still starting! Please wait before reconnecting"))
                         {
-                            if (TryTick>short.MaxValue)
+                            if (TryTick > short.MaxValue)
                             {
                                 Console.WriteLine("这服务器怎么一直在开启中的,怕是出了什么bug了...");
                                 Console.WriteLine($"请把这些信息复制给作者来修bug:{je.ToString()}");
@@ -256,7 +258,7 @@ namespace PlayersMonitor.Modes
                     RetryHandler(ref RetryTime, ref TryTick, MaxTryTick);
                     continue;
                 }
-                catch(NullReferenceException nre)
+                catch (NullReferenceException nre)
                 {
                     StandardExceptionHandler(nre, "发生了异常", FirstTime, RetryTime, TryTick, MaxTryTick);
                     continue;
@@ -271,7 +273,7 @@ namespace PlayersMonitor.Modes
             return null;
         }
         //虽然名字这样叫吧,但是其实只是在打印名字而已
-        private void StandardExceptionHandler(Exception e,string consoleTitle, DateTime? firstTime,int retryTime,int tryTick,int maxTryTick)
+        private void StandardExceptionHandler(Exception e, string consoleTitle, DateTime? firstTime, int retryTime, int tryTick, int maxTryTick)
         {
             Console.Title = consoleTitle;
             Screen.Clear();
@@ -281,7 +283,7 @@ namespace PlayersMonitor.Modes
             Screen.WriteLine($"&e详细信息&r:&c{e.ToString()}");
             RetryHandler(ref retryTime, ref tryTick, maxTryTick);
         }
-        private void RetryHandler(ref int retryTime, ref int tick,int maxTick)
+        private void RetryHandler(ref int retryTime, ref int tick, int maxTick)
         {
             if (tick == 0)
                 Screen.WriteLine($"将在&f{(retryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");
@@ -299,7 +301,7 @@ namespace PlayersMonitor.Modes
             if (tick > maxTick / 2)
             {
                 retryTime += new Random().Next(233 * 2, 33333 * 3);
-                retryTime -= new Random().Next(2, 33333*3);
+                retryTime -= new Random().Next(2, 33333 * 3);
             }
             else
             {
@@ -326,6 +328,12 @@ namespace PlayersMonitor.Modes
             }
         }
 
+        public void ReplyHandler(PingReply pingReply)
+        {
+            throw new NotImplementedException();
+        }
+        
+
         //好像其它地方用不到,所以改成内部类了.(可能哪天又会改回去
         private class PlayersManager
         {
@@ -336,10 +344,10 @@ namespace PlayersMonitor.Modes
 
             public bool? IsOnlineMode;
 
-            private Configuration Config;
+            private MonitorPlayerConfig Config;
             private List<Player> PlayersList = new List<Player>();
 
-            public PlayersManager(Configuration config)
+            public PlayersManager(MonitorPlayerConfig config)
             {
                 Config = config ?? throw new ArgumentNullException(nameof(config));
             }
@@ -495,5 +503,6 @@ namespace PlayersMonitor.Modes
                 }
             }
         }
+        
     }
 }
