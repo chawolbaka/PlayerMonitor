@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PlayersMonitor.ConsoleOptions
 {
@@ -116,20 +117,29 @@ namespace PlayersMonitor.ConsoleOptions
                 Console.Write(InputPrompt_Host);
                 Console.ForegroundColor = ConsoleColor.White;
                 string UserInput = Console.ReadLine();
-
-                var BaseInfo = Minecraft.ServerAddressResolve(UserInput);
-                if (BaseInfo != null)
+                //我的解析写的有问题,可能有一些地址是可以用的但是我这边就是匹配不了,所以这边暂时加了一个强制使用符.
+                if (UserInput.Length>0&&UserInput[UserInput.Length-1] == '!')
                 {
-                    mpc.ServerHost = BaseInfo.Value.Host;
-                    mpc.ServerPort = BaseInfo.Value.Port;
+                    mpc.ServerHost = UserInput;
                 }
-                else if (InputPrompt_Host[0] != '你')
+                else
                 {
-                    InputPrompt_Host = "你输入的不是一个有效的服务器地址,请重新输入:";
+                    var BaseInfo = Minecraft.ServerAddressResolve(UserInput);
+                    if (BaseInfo != null)
+                    {
+                        mpc.ServerHost = BaseInfo.Value.Host;
+                        mpc.ServerPort = BaseInfo.Value.Port;
+                    }
+                    else if (InputPrompt_Host[0] != '你')
+                    {
+                        InputPrompt_Host = "你输入的不是一个有效的服务器地址,请重新输入:";
+                    }
                 }
                 Console.ResetColor();
+
             } while (string.IsNullOrWhiteSpace(mpc.ServerHost));
-            //感觉这块好像永远不会被加载到的样子?(原因可以看方法:Minecraft.ServerAddressResolve)
+            
+            //如果使用了"!"就需要用户补充一下端口号(除了这个情况我想不到还有什么情况会执行到这块地方来了,不过以防万一还是写在这边了)
             while (mpc.ServerPort==default(ushort))
             {
                 Console.Write(InputPrompt_Port);
