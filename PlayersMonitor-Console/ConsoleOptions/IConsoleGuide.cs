@@ -4,8 +4,9 @@ using System.Text;
 
 namespace PlayersMonitor.ConsoleOptions
 {
-    interface IBaseInfoGuide
+    interface IConsoleGuide
     {
-        Config OpenBaseGuide();
+        /// <returns>is Completed The Guide</returns>
+        bool OpenGuide();
     }
 }

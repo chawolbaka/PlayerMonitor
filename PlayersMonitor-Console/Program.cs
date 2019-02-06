@@ -41,10 +41,6 @@ namespace PlayersMonitor
         }
         private static void ConsoleInitializing()
         {
-            //修改控制台配色(Linux的我还没有写,暂时Windows Only)
-            if (SystemInfo.IsWindows)
-                Screen.SetColorScheme(new ConsolePlus.ColorSchemes.MinecraftColorScheme());
-
             //在一些Windows下不知道为什么会乱码/字显示不全这样子的问题,只有在非兼容模式下修改编码
             if (!UseCompatibilityMode)
             {
@@ -68,22 +64,7 @@ namespace PlayersMonitor
                     //string tag = GetServerTag("Data", Config.ServerHost, Config.ServerPort);
                     //return null;
                 case Mode.Type.Monitor:
-                    try
-                    {
-                        return new MonitorPlayer(MonitorPlayerConfig.LoadByConsoleOptions(args));
-                    }
-                    catch (EmptyConsoleOptionException eca)
-                    {
-                        if (eca.HasNext)
-                        {
-                            MonitorPlayerConfig mpc = new MonitorPlayerConfig();
-                            IBaseInfoGuide big = mpc as IBaseInfoGuide;
-                            if (big != null)
-                                return new MonitorPlayer(big.OpenBaseGuide() as MonitorPlayerConfig);
-                        }
-                        else
-                            Program.Exit(SystemInfo.IsWindows); break;
-                    }
+                    return new MonitorPlayer(new MonitorPlayerConfig(args));
             }
             throw new Exception("创建模式失败.");
         }
@@ -92,10 +73,7 @@ namespace PlayersMonitor
             //因为在修改控制台中的文字时会暂时隐藏光标
             //所以有概率在还没有改回来的状态下就被用户按下Ctrl+c然后光标就没了所以这边需要恢复一下
             Console.CursorVisible = true;
-            //PowerShell下用这个颜色会炸,需要还原。
-            if (SystemInfo.IsWindows)
-                Screen.SetColorScheme(new ConsolePlus.ColorSchemes.CMDColorScheme());//我不知道怎么识别是PowerShell还是CMD,暂时无脑CMD了.
-
+            
             if (showExitInfo)
             {
                 Console.WriteLine("按任意键关闭程序...");

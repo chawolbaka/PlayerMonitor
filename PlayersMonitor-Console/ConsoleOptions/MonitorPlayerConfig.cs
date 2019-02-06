@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PlayersMonitor.ConsolePlus;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,8 @@ using System.Text.RegularExpressions;
 
 namespace PlayersMonitor.ConsoleOptions
 {
-    public class MonitorPlayerConfig : ConsoleConfig, IBaseInfoGuide
+    public class MonitorPlayerConfig : ConsoleProgramConfig, IConsoleGuide,IConsoleHelp 
+
     {
         public override string WindowTitleStyle { get; protected set; } = "$IP:$PORT($PING_TIMEms)";
 
@@ -19,14 +21,21 @@ namespace PlayersMonitor.ConsoleOptions
         public string RunCommandForPlayerJoin { get; set; }
         public string RunCommandForPlayerDisconnected { get; set; }
 
-        public static MonitorPlayerConfig LoadByConsoleOptions(List<string> argumentList)
+        public MonitorPlayerConfig(string serverHost,ushort serverPort)
+        {
+
+        }
+        public MonitorPlayerConfig(List<string> argumentList)
+        {
+            base.LoadByConsoleOptions(argumentList);
+            LoadByConsoleOptions(argumentList);
+        }
+
+
+        protected override void LoadByConsoleOptions(List<string> argumentList)
         {
             if (argumentList == null)
                 throw new ArgumentNullException(nameof(argumentList));
-            else if (!argumentList.Any())
-                throw new EmptyConsoleOptionException("cannot find any console option", true);
-
-            MonitorPlayerConfig MPC = new MonitorPlayerConfig();
 
             for (int i = 0; i < argumentList.Count; i++)
             {
@@ -37,78 +46,87 @@ namespace PlayersMonitor.ConsoleOptions
                     {
                         case "-h":
                         case "-help":
-                            //这块将来考虑改成单独的方法.
-                            Console.WriteLine("选项:");
-                            Console.WriteLine("-ip \t服务器IP地址");
-                            //为了在命令行选项里面严格一点,暂时不启用这个功能了.(只在无任何命令行选项的情况启用)
-                            //Console.WriteLine("-host \t服务器地址:端口号,端口号留空的情况会使用MC默认的25565");
-                            Console.WriteLine($"-port \t服务器端口号(范围:1-65535),不使用这个命令行选项会使用MC的默认端口号({Minecraft.DefaultPortOfServer})");
-                            Console.WriteLine($"-sleep \t每次Ping完服务器后休眠的时间(单位:毫秒,默认:{MPC.SleepTime}ms)");
-                            Console.WriteLine("-blood \t一个玩家被检测到后的初始血量(默认8)\r\n");//这边的8有问题,如果我改了默认值这边也不会变化,不过我懒的处理这个问题了.
-                            Console.WriteLine("--script-logged  <ScriptPath>\t当一个玩家加入服务器后会执行这个程序,如果目录中有空格需要在头尾加引号.");
-                            Console.WriteLine("--script-loggedout <ScriptPath>\t当一个玩家离开服务器后会执行这个程序,如果目录中有空格需要在头尾加引号.");
-                            Program.Exit(SystemInfo.IsWindows);
+                            (this as IConsoleHelp).Show();
                             break;
-                        case "-host":
                         case "-ip":
-                            MPC.ServerHost = argumentList[i + 1];
+                        case "-host":
+                            this.ServerHost = argumentList[i + 1];
                             i++;
                             break;
                         case "-p":
                         case "-port":
-                            MPC.ServerPort = ushort.Parse(argumentList[i + 1]);
+                            this.ServerPort = ushort.Parse(argumentList[i + 1]);
                             i++;
                             break;
                         case "-s":
                         case "-sleep":
-                            MPC.SleepTime = int.Parse(argumentList[i + 1]);
+                            this.SleepTime = int.Parse(argumentList[i + 1]);
                             i++;
                             break;
                         case "-b":
                         case "-blood":
-                            MPC.Blood = int.Parse(argumentList[i + 1]);
+                            this.Blood = int.Parse(argumentList[i + 1]);
                             i++;
                             break;
+                        case "--color-minecraft":
+                            this.SwitchColorScheme(new ConsolePlus.ColorSchemes.MinecraftColorScheme());
+                            break;
                         case "--script-logged":
-                            MPC.RunCommandForPlayerJoin = argumentList.Count >= i + 1 ? argumentList[i + 1] : throw new Exception($"option {argumentList[i]} it value is empty");
+                            this.RunCommandForPlayerJoin = argumentList.Count >= i + 1 ? argumentList[i + 1] : throw new Exception($"option {argumentList[i]} it value is empty");
                             i++;
                             break;
                         case "--script-loggedout":
-                            MPC.RunCommandForPlayerDisconnected = argumentList.Count >= i + 1 ? argumentList[i + 1] : throw new Exception($"option {argumentList[i]} it value is empty");
+                            this.RunCommandForPlayerDisconnected = argumentList.Count >= i + 1 ? argumentList[i + 1] : throw new Exception($"option {argumentList[i]} it value is empty");
                             i++;
+                            break;
+
+                        default:
+                            ColorfulConsole.WriteLine($"&c错误:\r\n &r未知命令行选项:{argumentList[i]}\r\n");
+                            Program.Exit(false);
                             break;
                     }
                 }
-                catch (OverflowException)
+                catch (ArgumentOutOfRangeException)
                 {
+                    if (argumentList.Count <= i + 1)
+                    {
+                        ColorfulConsole.WriteLine($"&c错误:\r\n &r命令行选项 \"&e{argumentList[i]}&r\" 需要一个参数.\r\n");
+                        Program.Exit(false);
+                    }
+                    else
+                        throw;
+                    
+                }
+                catch (FormatException)
+                {
+                    ColorfulConsole.Write($"&c错误:\r\n &r命令行选项 \"&e{argumentList[i]}&r\" 的值无法被转换,");
                     switch (argumentList[i].ToLower())
                     {
                         case "-p":
                         case "-port":
-                            Console.WriteLine($"命令行选项 \"{argumentList[i]}\" 的值无法被转换,请输入一个有效的端口号(1-65535)");
+                            Console.WriteLine("请输入一个有效的端口号(1-65535)");
                             break;
                         case "-s":
                         case "-b":
                         case "-sleep":
                         case "-blood":
-                            Console.WriteLine($"命令行选项 \"{argumentList[i]}\" 的值不是一个有效的32位带符号整数.");
+                            Console.WriteLine("它不是一个有效的32位带符号整数.");
                             break;
                         default:
-                            Console.WriteLine($"{argumentList[i]}的值无法被转换,超出范围.");
+                            Console.WriteLine("超出范围.");
                             break;
                     }
-                    Environment.Exit(0);
+                    Console.WriteLine();
+                    Program.Exit(false);
                 }
             }
-            if (!string.IsNullOrWhiteSpace(MPC.ServerHost))
-                MPC.ServerPort = Minecraft.DefaultPortOfServer;
+            if (!string.IsNullOrWhiteSpace(this.ServerHost))
+                this.ServerPort = Minecraft.DefaultPortOfServer;
             
-            return MPC;
         }
 
-        Config IBaseInfoGuide.OpenBaseGuide()
+        bool IConsoleGuide.OpenGuide()
         {
-            MonitorPlayerConfig mpc = new MonitorPlayerConfig();
             string InputPrompt_Host = $"服务器地址:";
             string InputPrompt_Port = $"服务器端口号(1-{ushort.MaxValue}):";
             
@@ -120,15 +138,15 @@ namespace PlayersMonitor.ConsoleOptions
                 //我的解析写的有问题,可能有一些地址是可以用的但是我这边就是匹配不了,所以这边暂时加了一个强制使用符.
                 if (UserInput.Length>0&&UserInput[UserInput.Length-1] == '!')
                 {
-                    mpc.ServerHost = UserInput;
+                    this.ServerHost = UserInput;
                 }
                 else
                 {
                     var BaseInfo = Minecraft.ServerAddressResolve(UserInput);
                     if (BaseInfo != null)
                     {
-                        mpc.ServerHost = BaseInfo.Value.Host;
-                        mpc.ServerPort = BaseInfo.Value.Port;
+                        this.ServerHost = BaseInfo.Value.Host;
+                        this.ServerPort = BaseInfo.Value.Port;
                     }
                     else if (InputPrompt_Host[0] != '你')
                     {
@@ -137,22 +155,38 @@ namespace PlayersMonitor.ConsoleOptions
                 }
                 Console.ResetColor();
 
-            } while (string.IsNullOrWhiteSpace(mpc.ServerHost));
+            } while (string.IsNullOrWhiteSpace(this.ServerHost));
             
             //如果使用了"!"就需要用户补充一下端口号(除了这个情况我想不到还有什么情况会执行到这块地方来了,不过以防万一还是写在这边了)
-            while (mpc.ServerPort==default(ushort))
+            while (this.ServerPort==default(ushort))
             {
                 Console.Write(InputPrompt_Port);
                 Console.ForegroundColor = ConsoleColor.White;
                 string UserInput = Console.ReadLine();
                 if (ushort.TryParse(UserInput, out ushort port))
-                    mpc.ServerPort = port;
+                    this.ServerPort = port;
                 else if(InputPrompt_Port[0]!='你')
                     InputPrompt_Port = "你输入的不是一个有效的端口号,请重新输入:";
                 Console.ResetColor();
             }
             Console.Clear();//要不要清屏这个问题我有点犹豫的,写完再看看要不要清吧.
-            return mpc;
+            return true;
+        }
+
+        void IConsoleHelp.Show()
+        {
+            Console.WriteLine("Options:");
+            Console.WriteLine(" -ip\t<Host>\t\t服务器IP地址");
+            //为了在命令行选项里面严格一点,暂时不启用这个功能了.(只在无任何命令行选项的情况启用)
+            //Console.WriteLine("-host \t服务器地址:端口号,端口号留空的情况会使用MC默认的25565");
+            Console.WriteLine($" -port\t<Port>\t\t服务器端口号(范围:1-65535),不使用这个命令行选项会使用MC的默认端口号({Minecraft.DefaultPortOfServer})");
+            Console.WriteLine($" -sleep\t<SleepTime>\t每次Ping完服务器后休眠的时间(单位:毫秒,默认:{this.SleepTime}ms)");
+            Console.WriteLine(" -blood\t<DefaultBlood>\t一个玩家被检测到后的初始血量(默认8)\r\n");//这边的8有问题,如果我改了默认值这边也不会变化,不过我懒的处理这个问题了.
+
+            Console.WriteLine(" --script-logged     <ScriptPath>    当一个玩家加入服务器后会执行这个程序,如果路径中有空格需要在头尾加引号.");
+            Console.WriteLine(" --script-loggedout  <ScriptPath>    当一个玩家离开服务器后会执行这个程序,如果路径中有空格需要在头尾加引号.\r\n");
+            Console.WriteLine(" --color-minecraft \t使用MC的RGB值(仅支持Windows)\r\n\r\n");
+            Program.Exit(false);
         }
     }
 }

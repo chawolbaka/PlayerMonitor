@@ -4,8 +4,8 @@ using System.Text;
 
 namespace PlayersMonitor.ConsoleOptions
 {
-    public class ConsoleConfig:Config
+    interface IConsoleHelp
     {
-        public virtual string WindowTitleStyle { get; protected set; }
+        void Show();
     }
 }
