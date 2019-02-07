@@ -27,8 +27,17 @@ namespace PlayersMonitor.ConsoleOptions
         }
         public MonitorPlayerConfig(List<string> argumentList)
         {
-            base.LoadByConsoleOptions(argumentList);
-            LoadByConsoleOptions(argumentList);
+            if (argumentList.Any())
+            {
+                LoadByConsoleOptions(argumentList);
+                if (string.IsNullOrWhiteSpace(this.ServerHost) || ServerPort == default(ushort))
+                {
+                    Console.WriteLine("缺少有效的服务器地址或端口号.");
+                    (this as IConsoleGuide).OpenGuide();
+                }
+            }
+            else
+                base.LoadByConsoleOptions(argumentList);
         }
 
 
@@ -120,8 +129,9 @@ namespace PlayersMonitor.ConsoleOptions
                     Program.Exit(false);
                 }
             }
-            if (!string.IsNullOrWhiteSpace(this.ServerHost))
-                this.ServerPort = Minecraft.DefaultPortOfServer;
+            //这里我当初是怎么想的???
+            //if (!string.IsNullOrWhiteSpace(this.ServerHost))
+            //    this.ServerPort = Minecraft.DefaultPortOfServer;
             
         }
 
@@ -129,8 +139,8 @@ namespace PlayersMonitor.ConsoleOptions
         {
             string InputPrompt_Host = $"服务器地址:";
             string InputPrompt_Port = $"服务器端口号(1-{ushort.MaxValue}):";
-            
-            do
+
+            while (string.IsNullOrWhiteSpace(this.ServerHost))
             {
                 Console.Write(InputPrompt_Host);
                 Console.ForegroundColor = ConsoleColor.White;
@@ -154,10 +164,9 @@ namespace PlayersMonitor.ConsoleOptions
                     }
                 }
                 Console.ResetColor();
-
-            } while (string.IsNullOrWhiteSpace(this.ServerHost));
+            } 
             
-            //如果使用了"!"就需要用户补充一下端口号(除了这个情况我想不到还有什么情况会执行到这块地方来了,不过以防万一还是写在这边了)
+            //如果使用了"!"就需要用户补充一下端口号,或者用户使用的是命令行选项来开启程序,但是没使用 "-port" 选项
             while (this.ServerPort==default(ushort))
             {
                 Console.Write(InputPrompt_Port);
