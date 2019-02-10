@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using PlayersMonitor.Modes;
-using PlayersMonitor.ConsoleOptions;
+using PlayersMonitor.Configs;
 
 namespace PlayersMonitor
 {

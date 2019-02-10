@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using PlayersMonitor.ConsoleOptions;
 using PlayersMonitor.ConsolePlus.ColorSchemes;
 
-namespace PlayersMonitor.ConsoleOptions
+namespace PlayersMonitor.Configs
 {
     public abstract class ConsoleProgramConfig : Config
     {

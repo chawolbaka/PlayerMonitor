@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PlayersMonitor.ConsoleOptions
+namespace PlayersMonitor.Configs
 {
     public abstract class Config
     {
-
     }
 }
