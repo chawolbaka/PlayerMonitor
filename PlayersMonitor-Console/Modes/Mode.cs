@@ -9,14 +9,14 @@ namespace PlayersMonitor.Modes
             Chart,
             Monitor
         }
-        protected enum Statuses
+        protected enum States
         {
             Initializing,
             Initialized,
             Running,
             Abort
         }
-        protected Statuses Status { get; set; }
+        protected States State { get; set; }
 
         public abstract string Name { get;}
         public abstract string Description { get;}

@@ -10,7 +10,7 @@ using System.Net;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-using PlayersMonitor.ConsoleOptions;
+using PlayersMonitor.Configs;
 #if DoNet
 using System.Drawing;
 using System.IO;
@@ -32,7 +32,7 @@ namespace PlayersMonitor.Modes
 
         public MonitorPlayer(MonitorPlayerConfig config)
         {
-            Status = Statuses.Initializing;
+            State = States.Initializing;
             Config = config != null ? config : throw new ArgumentNullException(nameof(config));
             MainPlayerManager = new PlayersManager(config);
             //注册玩家上下线的事件
@@ -83,29 +83,29 @@ namespace PlayersMonitor.Modes
                     Environment.Exit(-1);
                 }
             }
-            Status = Statuses.Initialized;
+            State = States.Initialized;
         }
         public override void Start()
         {
-            Status = Statuses.Running;
+            State = States.Running;
             StartPrintInfo(Ping);
         }
         public override void StartAsync()
         {
-            Status = Statuses.Running;
+            State = States.Running;
             Thread PrintThread = new Thread(StartPrintInfo);
             PrintThread.Start(Ping);
         }
         public void Abort()
         {
-            Status = Statuses.Abort;
+            State = States.Abort;
         }
 
         private void StartPrintInfo(object obj)
         {
             Ping Ping = obj as Ping;
             string Tag_SERVER_VERSION = "", Tag_ONLINE_COUNT = "";
-            while (Status == Statuses.Running)
+            while (State == States.Running)
             {
                 //获取Ping信息
                 PingReply PingResult = ExceptionHandler(Ping.Send);
@@ -173,7 +173,7 @@ namespace PlayersMonitor.Modes
             int RetryTime = 1000 * 6;
             int TryTick = 0;
             int MaxTryTick = ushort.MaxValue;
-            while (Status != Statuses.Abort)
+            while (State != States.Abort)
             {
                 PingReply Result = null;
                 try

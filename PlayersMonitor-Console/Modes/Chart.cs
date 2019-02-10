@@ -25,16 +25,16 @@ namespace PlayersMonitor.Modes
 
         public Chart(Configuration config,string path)
         {
-            Status = Statuses.Initializing;
+            State = States.Initializing;
             Config = config != null ? config : throw new ArgumentNullException(nameof(config));
             DataPath = string.IsNullOrWhiteSpace(path) != true ? path : throw new ArgumentNullException(nameof(path));
             ping = new Ping(Config.ServerHost, Config.ServerPort);
         }
         public override void Start()
         {
-            Status = Statuses.Running;
+            State = States.Running;
             
-            while (Status==Statuses.Running)
+            while (State==States.Running)
             {
                 PingReply PingResult = ping.Send();
                 if (Directory.Exists(DataPath) == false)
@@ -95,7 +95,7 @@ namespace PlayersMonitor.Modes
         }
         public void Abort()
         {
-            Status = Statuses.Abort;
+            State = States.Abort;
         }
     }
 }
