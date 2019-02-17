@@ -119,6 +119,7 @@ namespace PlayersMonitor.Modes
                 if (IsFirstPrint)
                 {
                     Screen.Clear();
+                    MainPlayerManager.Clear();
                     Tag_SERVER_VERSION = Screen.CreateLine("服务端版本:", "");
                     Tag_ONLINE_COUNT = Screen.CreateLine("在线人数:", "");
 #if DoNet
@@ -190,7 +191,10 @@ namespace PlayersMonitor.Modes
                 }
                 catch (SocketException e)
                 {
-                    //如果能恢复的话屏幕那边需要重新初始化,所以这边清理(初始化)一下
+                    //恢复连接后有两种可能性:
+                    //1.服务器崩溃
+                    //2.客户端网络异常
+                    //这边将来我可能会写更好的处理方法,现在只要崩溃了就无脑清空屏幕和玩家列表(玩家列表在FristPrint那边清理)
                     Screen.Clear();
                     IsFirstPrint = true;
                     if (e.SocketErrorCode == SocketError.HostNotFound)
@@ -379,6 +383,11 @@ namespace PlayersMonitor.Modes
                     JoinedEvnt?.Invoke(NewPlayer);
                 }
                 //LifeTimer();
+            }
+            public void Clear()
+            {
+                if (PlayersList.Count > 0)
+                    PlayersList.Clear();
             }
             public void LifeTimer()
             {
