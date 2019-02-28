@@ -39,11 +39,11 @@ namespace PlayersMonitor.Modes
                 PingReply PingResult = ping.Send();
                 if (Directory.Exists(DataPath) == false)
                     Directory.CreateDirectory(DataPath);
-                string FileName= Path.Combine(DataPath, $"{DateTime.Now.ToString("yyyy-MM-dd")}.json");
+                string FileName= Path.Combine(DataPath, $"{DateTime.Now:yyyy-MM-dd)}.json");
                 if (File.Exists(FileName) == false)
                     CreateJson(FileName,PingResult);
                 if (ToPrintInfo)
-                    Console.WriteLine($"[{DateTime.Now.ToString()}]玩家数量:{PingResult.Player.Online}");
+                    Console.WriteLine($"[{DateTime.Now}]玩家数量:{PingResult.Player.Online}");
                 WriteData(FileName,PingResult);
                 Thread.Sleep(Interval);
             }

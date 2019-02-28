@@ -77,7 +77,7 @@ namespace PlayersMonitor.Modes
                 {
                     Screen.Clear();
                     Screen.WriteLine("&c错误&r:&f你输入的服务器地址不存在");
-                    Screen.WriteLine($"&e详细信息&r:&4{se.ToString()}");
+                    Screen.WriteLine($"&e详细信息&r:&4{se}");
                     if (SystemInfo.IsWindows)
                         Console.ReadKey(true);
                     Environment.Exit(-1);
@@ -115,7 +115,7 @@ namespace PlayersMonitor.Modes
                 Console.Title = Config.WindowTitleStyle.
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
-                    Replace("$PING_TIME", Time != null ? ((float)Time).ToString("F2") : $"{short.MinValue}");
+                    Replace("$PING_TIME", Time != null ?$"{(float)Time:F2}": $"{short.MinValue}");
                 if (IsFirstPrint)
                 {
                     Screen.Clear();
@@ -167,7 +167,7 @@ namespace PlayersMonitor.Modes
             else
                 return $"&e{serverVersionName}";
         }
-
+        
         private PingReply ExceptionHandler(Run run)
         {
             DateTime? FirstTime = null;
@@ -176,15 +176,15 @@ namespace PlayersMonitor.Modes
             int MaxTryTick = ushort.MaxValue;
             while (State != States.Abort)
             {
-                PingReply Result = null;
+                PingReply SLPResult = null;
                 try
                 {
-                    Result = run();
-                    if (Result != null)
+                    SLPResult = run();
+                    if (SLPResult != null)
                     {
                         FirstTime = null;
                         TryTick = 0;
-                        return Result;
+                        return SLPResult;
                     }
                     else
                         throw new NullReferenceException("Reply is null");
@@ -219,7 +219,7 @@ namespace PlayersMonitor.Modes
                         else
                         {
                             Console.Title = $"发生了网络异常";
-                            Screen.WriteLine($"&e详细信息&r:&c{e.ToString()}");
+                            Screen.WriteLine($"&e详细信息&r:&c{e}");
                         }
                         RetryHandler(ref RetryTime, ref TryTick, MaxTryTick);
                         continue;
@@ -232,14 +232,14 @@ namespace PlayersMonitor.Modes
                     Screen.Clear();
                     if (je is JsonSerializationException)
                     {
-                        string ErrorJson = Result?.ToString();
+                        string ErrorJson = SLPResult?.ToString();
                         if (!string.IsNullOrWhiteSpace(ErrorJson) &&
                             ErrorJson.Contains("Server is still starting! Please wait before reconnecting"))
                         {
                             if (TryTick > short.MaxValue)
                             {
                                 Console.WriteLine("这服务器怎么一直在开启中的,怕是出了什么bug了...");
-                                Console.WriteLine($"请把这些信息复制给作者来修bug:{je.ToString()}");
+                                Console.WriteLine($"请把这些信息复制给作者来修bug:{je}");
                             }
                             else
                             {
@@ -253,12 +253,12 @@ namespace PlayersMonitor.Modes
                     }
                     PrintTime(ref FirstTime);
                     Screen.WriteLine("&cjson解析错误&f:&r服务器返回了一个无法被解析的json");
-                    if (Result != null)
+                    if (SLPResult != null)
                     {
                         Screen.WriteLine($"&e无法被解析的json&f:");
-                        Screen.WriteLine($"{Result.ToString()}");
+                        Screen.WriteLine($"{SLPResult.ToString()}");
                     }
-                    Screen.WriteLine($"&e详细信息&r:&c{je.ToString()}");
+                    Screen.WriteLine($"&e详细信息&r:&c{je}");
                     RetryHandler(ref RetryTime, ref TryTick, MaxTryTick);
                     continue;
                 }
@@ -270,7 +270,7 @@ namespace PlayersMonitor.Modes
                 catch (Exception)
                 {
                     Console.Clear();
-                    Console.WriteLine($"Time:{DateTime.Now.ToString()}");
+                    Console.WriteLine($"Time:{DateTime.Now}");
                     throw;
                 }
             }
@@ -284,15 +284,15 @@ namespace PlayersMonitor.Modes
             IsFirstPrint = true;
             //Print Info
             PrintTime(ref firstTime);
-            Screen.WriteLine($"&e详细信息&r:&c{e.ToString()}");
+            Screen.WriteLine($"&e详细信息&r:&c{e}");
             RetryHandler(ref retryTime, ref tryTick, maxTryTick);
         }
         private void RetryHandler(ref int retryTime, ref int tick, int maxTick)
         {
             if (tick == 0)
-                Screen.WriteLine($"将在&f{(retryTime / 1000.0f).ToString("F2")}&r秒后尝试重新连接服务器");
+                Screen.WriteLine($"将在&f{(retryTime / 1000.0f):F2}&r秒后尝试重新连接服务器");
             else if (tick < maxTick)
-                Screen.WriteLine($"&e已重试&r:&f{tick}次,{(retryTime / 1000.0f).ToString("F2")}秒后将继续尝试去重新连接服务器");
+                Screen.WriteLine($"&e已重试&r:&f{tick}次,{(retryTime / 1000.0f):F2}秒后将继续尝试去重新连接服务器");
             else
             {
                 Console.WriteLine($"已到达最大重试次数({maxTick})");
@@ -323,12 +323,12 @@ namespace PlayersMonitor.Modes
             if (firstTime == null)
             {
                 firstTime = DateTime.Now;
-                Screen.WriteLine($"&f发生时间&r:&e{firstTime.ToString()}");
+                Screen.WriteLine($"&f发生时间&r:&e{firstTime}");
             }
             else
             {
-                Screen.WriteLine($"&f发生时间(首次)&r:&e{firstTime.ToString()}");
-                Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now.ToString()}");
+                Screen.WriteLine($"&f发生时间(首次)&r:&e{firstTime}");
+                Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now}");
             }
         }
 
@@ -377,8 +377,8 @@ namespace PlayersMonitor.Modes
 
                     //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
                     NewPlayer.ScreenTag = Screen.CreateLine(
-                        "[", (PlayersList.Count + 1).ToString("D2"), "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{(NewPlayer.Blood - 1).ToString("D2")}", "]",
-                        "Name:", NewPlayer.Name, "(", NewPlayer.Uuid.ToString(), ")");
+                        "[", $"{PlayersList.Count + 1:D2}", "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{NewPlayer.Blood - 1:D2}", "]",
+                        "Name:", NewPlayer.Name, "(", $"{NewPlayer.Uuid}", ")");
                     PlayersList.Add(NewPlayer);
                     JoinedEvnt?.Invoke(NewPlayer);
                 }
@@ -405,7 +405,7 @@ namespace PlayersMonitor.Modes
                         {
                             for (int j = 0; j < PlayersList.Count; j++)
                             {
-                                Screen.ReviseField((j + 1).ToString("D2"), 1, PlayersList[j].ScreenTag);
+                                Screen.ReviseField($"{j+1:D2}", 1, PlayersList[j].ScreenTag);
                             }
                         }
                         DisconnectedEvent?.Invoke(PlayerTmp);
@@ -413,7 +413,7 @@ namespace PlayersMonitor.Modes
                     else
                     {
                         Screen.ReviseField(
-                            $"{GetBloodColor(PlayersList[i].Blood, Config.Blood)}{PlayersList[i].Blood.ToString("D2")}", 3, PlayersList[i].ScreenTag);
+                            $"{GetBloodColor(PlayersList[i].Blood, Config.Blood)}{PlayersList[i].Blood:D2}", 3, PlayersList[i].ScreenTag);
                     }
                 }
             }
@@ -422,7 +422,7 @@ namespace PlayersMonitor.Modes
                 foreach (var Player in PlayersList)
                 {
                     Player.Blood = blood ?? Config.Blood;
-                    Screen.ReviseField($"&a{Player.Blood.ToString("D2")}", 3, Player.ScreenTag);
+                    Screen.ReviseField($"&a{Player.Blood:D2)}", 3, Player.ScreenTag);
                 }
             }
             private string GetBloodColor(int nowBlood, int maxBlood)
@@ -441,7 +441,7 @@ namespace PlayersMonitor.Modes
                 StringBuilder sb = new StringBuilder();
                 foreach (var player in PlayersList)
                 {
-                    sb.Append($"{player.ToString()}{Environment.NewLine}");
+                    sb.Append($"{player}{Environment.NewLine}");
                     sb.Append("---------------------------------");
                 }
                 return sb.ToString();
@@ -505,7 +505,7 @@ namespace PlayersMonitor.Modes
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.Append($"PlayerName:{Name}{Environment.NewLine}");
-                    sb.Append($"uuid:{Uuid.ToString()}{Environment.NewLine}");
+                    sb.Append($"uuid:{Uuid}{Environment.NewLine}");
                     sb.Append($"Blood:{Blood}{Environment.NewLine}");
                     sb.Append($"ScreenTag:{ScreenTag}{Environment.NewLine}");
                     return sb.ToString();
