@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace PlayersMonitor.ConsolePlus.ColorSchemes
+namespace PlayerMonitor.ConsolePlus.ColorSchemes
 {
     /// <summary>The Color Names Comes From:https://en.wikipedia.org/wiki/ANSI_escape_code#Colors (Date:2018-12-22)</summary>
     public abstract class ConsoleColorScheme

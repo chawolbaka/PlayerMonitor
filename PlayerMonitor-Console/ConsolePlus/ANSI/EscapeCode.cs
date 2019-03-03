@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PlayersMonitor.ConsolePlus.ANSI
+namespace PlayerMonitor.ConsolePlus.ANSI
 {
 
     /// <summary>

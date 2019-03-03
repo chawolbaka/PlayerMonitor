@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PlayersMonitor.Configs
+namespace PlayerMonitor.Configs
 {
     public abstract class Config
     {

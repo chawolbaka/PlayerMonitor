@@ -5,15 +5,15 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using PlayersMonitor.Modes;
-using PlayersMonitor.Configs;
+using PlayerMonitor.Modes;
+using PlayerMonitor.Configs;
 
-namespace PlayersMonitor
+namespace PlayerMonitor
 {
     
     class Program
     {
-        public static readonly string Name = "PlayersMonitor";
+        public static readonly string Name = "PlayerMonitor";
         public static readonly string Version = "bata 0.2";
 
         public static bool UseCompatibilityMode = true;//之后在处理这个先直接全部兼容模式

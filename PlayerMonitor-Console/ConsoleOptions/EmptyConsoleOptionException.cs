@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PlayersMonitor.ConsoleOptions
+namespace PlayerMonitor.ConsoleOptions
 {
     public class EmptyConsoleOptionException:Exception
     {

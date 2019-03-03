@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace PlayersMonitor
+namespace PlayerMonitor
 {
     //Source:http://pinvoke.net
     internal static class WinAPI

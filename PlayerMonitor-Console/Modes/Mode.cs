@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PlayersMonitor.Modes
+namespace PlayerMonitor.Modes
 {
     public abstract class Mode
     {

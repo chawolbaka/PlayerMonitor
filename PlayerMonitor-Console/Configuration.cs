@@ -1,8 +1,8 @@
 using System;
 using System.Text.RegularExpressions;
-using PlayersMonitor.Modes;
+using PlayerMonitor.Modes;
 
-namespace PlayersMonitor
+namespace PlayerMonitor
 {
     public class Configuration
     {

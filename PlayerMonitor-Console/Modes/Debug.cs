@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PlayersMonitor.Modes
+namespace PlayerMonitor.Modes
 {
     //public class Debug:Mode
     //{

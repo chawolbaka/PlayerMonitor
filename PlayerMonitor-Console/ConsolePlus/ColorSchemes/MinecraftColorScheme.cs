@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace PlayersMonitor.ConsolePlus.ColorSchemes
+namespace PlayerMonitor.ConsolePlus.ColorSchemes
 {
     public class MinecraftColorScheme:ConsoleColorScheme
     {

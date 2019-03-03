@@ -10,13 +10,13 @@ using System.Net;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-using PlayersMonitor.Configs;
+using PlayerMonitor.Configs;
 #if DoNet
 using System.Drawing;
 using System.IO;
 #endif
 
-namespace PlayersMonitor.Modes
+namespace PlayerMonitor.Modes
 {
     public class MonitorPlayer : Mode
     {
@@ -26,7 +26,7 @@ namespace PlayersMonitor.Modes
 
         private delegate PingReply Run();
         private MonitorPlayerConfig Config;
-        private PlayersManager MainPlayerManager;
+        private PlayerManager MainPlayerManager;
         private Ping Ping;
         private bool IsFirstPrint = true;
 
@@ -34,7 +34,7 @@ namespace PlayersMonitor.Modes
         {
             State = States.Initializing;
             Config = config != null ? config : throw new ArgumentNullException(nameof(config));
-            MainPlayerManager = new PlayersManager(config);
+            MainPlayerManager = new PlayerManager(config);
             //注册玩家上下线的事件
             if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerJoin))
             {
@@ -339,7 +339,7 @@ namespace PlayersMonitor.Modes
         
 
         //好像其它地方用不到,所以改成内部类了.(可能哪天又会改回去
-        private class PlayersManager
+        private class PlayerManager
         {
             public delegate void PlayerJoinedEvntHandler(Player player);
             public delegate void PlayerDisconnectedEvntHandler(Player player);
@@ -349,18 +349,18 @@ namespace PlayersMonitor.Modes
             public bool? IsOnlineMode;
 
             private MonitorPlayerConfig Config;
-            private List<Player> PlayersList = new List<Player>();
+            private List<Player> PlayerList = new List<Player>();
 
-            public PlayersManager(MonitorPlayerConfig config)
+            public PlayerManager(MonitorPlayerConfig config)
             {
                 Config = config ?? throw new ArgumentNullException(nameof(config));
             }
             public void Add(string name, Guid uuid)
             {
-                int DefPlayerBlood = PlayersList.Count < 12 ? 2 : Config.Blood;
+                int DefPlayerBlood = PlayerList.Count < 12 ? 2 : Config.Blood;
                 if (Config == null)
                     throw new Exception("Not Initializtion");
-                Player FoundPlayer = PlayersList.Find(x => x.Uuid.ToString().Replace("-", "") == uuid.ToString().Replace("-", ""));
+                Player FoundPlayer = PlayerList.Find(x => x.Uuid.ToString().Replace("-", "") == uuid.ToString().Replace("-", ""));
                 if (FoundPlayer != null) //如果找到了这个玩家就把它的血恢复到默认值(回血)
                 {
                     FoundPlayer.Blood = DefPlayerBlood;
@@ -369,7 +369,7 @@ namespace PlayersMonitor.Modes
                 else if (FoundPlayer == null)
                 {
                     Player NewPlayer = new Player(name, Guid.Parse(uuid.ToString()), DefPlayerBlood);
-                    if (PlayersList.Count == 0)
+                    if (PlayerList.Count == 0)
                     {
                         Thread t = new Thread(iom => IsOnlineMode = NewPlayer.IsOnlineMode());
                         t.Start();
@@ -377,35 +377,35 @@ namespace PlayersMonitor.Modes
 
                     //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
                     NewPlayer.ScreenTag = Screen.CreateLine(
-                        "[", $"{PlayersList.Count + 1:D2}", "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{NewPlayer.Blood - 1:D2}", "]",
+                        "[", $"{PlayerList.Count + 1:D2}", "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{NewPlayer.Blood - 1:D2}", "]",
                         "Name:", NewPlayer.Name, "(", $"{NewPlayer.Uuid}", ")");
-                    PlayersList.Add(NewPlayer);
+                    PlayerList.Add(NewPlayer);
                     JoinedEvnt?.Invoke(NewPlayer);
                 }
                 //LifeTimer();
             }
             public void Clear()
             {
-                if (PlayersList.Count > 0)
-                    PlayersList.Clear();
+                if (PlayerList.Count > 0)
+                    PlayerList.Clear();
             }
             public void LifeTimer()
             {
-                for (int i = 0; i < PlayersList.Count; i++)
+                for (int i = 0; i < PlayerList.Count; i++)
                 {
-                    PlayersList[i].Blood--;
+                    PlayerList[i].Blood--;
 
-                    if (PlayersList[i].Blood == 0)
+                    if (PlayerList[i].Blood == 0)
                     {
-                        Player PlayerTmp = PlayersList[i];
-                        PlayersList.Remove(PlayersList[i--]);
+                        Player PlayerTmp = PlayerList[i];
+                        PlayerList.Remove(PlayerList[i--]);
                         //从屏幕上移除这个玩家&修改其它玩家的序号(屏幕上的)
                         Screen.RemoveLine(PlayerTmp.ScreenTag, true);
-                        if (PlayersList.Count > 0)
+                        if (PlayerList.Count > 0)
                         {
-                            for (int j = 0; j < PlayersList.Count; j++)
+                            for (int j = 0; j < PlayerList.Count; j++)
                             {
-                                Screen.ReviseField($"{j+1:D2}", 1, PlayersList[j].ScreenTag);
+                                Screen.ReviseField($"{j+1:D2}", 1, PlayerList[j].ScreenTag);
                             }
                         }
                         DisconnectedEvent?.Invoke(PlayerTmp);
@@ -413,13 +413,13 @@ namespace PlayersMonitor.Modes
                     else
                     {
                         Screen.ReviseField(
-                            $"{GetBloodColor(PlayersList[i].Blood, Config.Blood)}{PlayersList[i].Blood:D2}", 3, PlayersList[i].ScreenTag);
+                            $"{GetBloodColor(PlayerList[i].Blood, Config.Blood)}{PlayerList[i].Blood:D2}", 3, PlayerList[i].ScreenTag);
                     }
                 }
             }
             private void RestoreHealthForAllPlayer(int? blood = null)
             {
-                foreach (var Player in PlayersList)
+                foreach (var Player in PlayerList)
                 {
                     Player.Blood = blood ?? Config.Blood;
                     Screen.ReviseField($"&a{Player.Blood:D2)}", 3, Player.ScreenTag);
@@ -427,7 +427,7 @@ namespace PlayersMonitor.Modes
             }
             private string GetBloodColor(int nowBlood, int maxBlood)
             {
-                if (PlayersList.Count <= 12)
+                if (PlayerList.Count <= 12)
                     return "&a";
                 if (nowBlood <= 1 || nowBlood <= maxBlood / 100.0f * 30)
                     return "&c";
@@ -439,7 +439,7 @@ namespace PlayersMonitor.Modes
             public override string ToString()
             {
                 StringBuilder sb = new StringBuilder();
-                foreach (var player in PlayersList)
+                foreach (var player in PlayerList)
                 {
                     sb.Append($"{player}{Environment.NewLine}");
                     sb.Append("---------------------------------");

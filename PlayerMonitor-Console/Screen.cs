@@ -2,9 +2,9 @@
 using System.Text;
 using System.Drawing;
 using System.Collections.Generic;
-using PlayersMonitor.ConsolePlus.ColorSchemes;
+using PlayerMonitor.ConsolePlus.ColorSchemes;
 
-namespace PlayersMonitor
+namespace PlayerMonitor
 {
     //无视效率,只要不造成闪烁就可以啦
     //(QAQ我想不无视也不行呀,要是还要考虑效率的话我怕连一个可以用的版本都发不出来了)

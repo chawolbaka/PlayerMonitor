@@ -7,7 +7,7 @@ using MinecraftProtocol.Utils;
 using MinecraftProtocol.DataType;
 using System.Threading;
 
-namespace PlayersMonitor.Modes
+namespace PlayerMonitor.Modes
 {
     public class Chart:Mode
     {
@@ -53,7 +53,7 @@ namespace PlayersMonitor.Modes
         private void CreateJson(string fileName,PingReply pingInfo)
         {
             var json = new JObject(
-                        new JProperty("type", "CHART:PLAYERS_ONLIE"),
+                        new JProperty("type", "CHART:PLAYER_ONLIE"),
                         new JProperty("version",Version),
                         new JProperty("date",DateTime.Now.ToString("yyyy-mm-dd")),
                         new JProperty("server_host",Config.ServerHost),

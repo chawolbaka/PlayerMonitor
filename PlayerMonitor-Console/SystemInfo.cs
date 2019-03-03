@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace PlayersMonitor
+namespace PlayerMonitor
 {
     internal static class SystemInfo
     {

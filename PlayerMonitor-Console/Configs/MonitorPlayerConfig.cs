@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using PlayersMonitor.ConsoleOptions;
-using PlayersMonitor.ConsolePlus;
+using PlayerMonitor.ConsoleOptions;
+using PlayerMonitor.ConsolePlus;
 
-namespace PlayersMonitor.Configs
+namespace PlayerMonitor.Configs
 {
     public class MonitorPlayerConfig : ConsoleProgramConfig, IConsoleGuide,IConsoleHelp 
 
