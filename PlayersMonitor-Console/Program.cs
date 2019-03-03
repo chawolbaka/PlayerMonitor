@@ -13,6 +13,9 @@ namespace PlayersMonitor
     
     class Program
     {
+        public static readonly string Name = "PlayersMonitor";
+        public static readonly string Version = "bata 0.2";
+
         public static bool UseCompatibilityMode = true;//之后在处理这个先直接全部兼容模式
 
         //即将废弃(等我想出运行模式存储的地方叫什么名字就删掉你)

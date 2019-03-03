@@ -183,6 +183,20 @@ namespace PlayersMonitor.Configs
 
         void IConsoleHelp.Show()
         {
+            if (SystemInfo.IsWindows)
+            {
+                Console.WriteLine($"Usege: {Program.Name}.exe 模式 [选项]");
+                Console.WriteLine($"       {Program.Name}.exe [选项]\r\n");
+            }
+            else
+            {
+                Console.WriteLine($"Usege: {Program.Name} Mode [Options]");
+                Console.WriteLine($"       {Program.Name} [Options]");
+                //Console.WriteLine($"       dotnet {Program.Name}.dll Mode [Options]\n");
+                //Console.WriteLine($"       dotnet {Program.Name}.dll [Options]");
+            }
+
+
             Console.WriteLine("Options:");
             Console.WriteLine(" -ip\t<Host>\t\t服务器IP地址");
             //为了在命令行选项里面严格一点,暂时不启用这个功能了.(只在无任何命令行选项的情况启用)
