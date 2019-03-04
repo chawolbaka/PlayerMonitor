@@ -96,7 +96,7 @@ namespace PlayerMonitor
         
         static WinAPI()
         {
-            if (!SystemInfo.IsWindows)
+            if (!Platform.IsWindows)
                 throw new PlatformNotSupportedException("Windows Only.");
         }
 

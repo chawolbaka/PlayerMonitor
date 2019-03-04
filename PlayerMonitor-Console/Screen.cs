@@ -13,14 +13,14 @@ namespace PlayerMonitor
         private static List<Line> Lines = new List<Line>();
         public static int SetDefaultForegroundColor(Color foregroundColor)
         {
-            if (!SystemInfo.IsWindows)
+            if (!Platform.IsWindows)
                 throw new PlatformNotSupportedException("it need WinAPI");
             else
                 return WinAPI.ReplaceConsoleColor(ConsoleColor.Gray, foregroundColor.R, foregroundColor.G, foregroundColor.B);
         }
         public static int SetDefaultBackgroundColor(Color backgroundColor)
         {
-            if (!SystemInfo.IsWindows)
+            if (!Platform.IsWindows)
                 throw new PlatformNotSupportedException("it need WinAPI");
             else
                 return WinAPI.ReplaceConsoleColor(ConsoleColor.Black, backgroundColor.R, backgroundColor.G, backgroundColor.B);

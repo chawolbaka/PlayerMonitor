@@ -185,7 +185,7 @@ namespace PlayerMonitor.Configs
 
         void IConsoleHelp.Show()
         {
-            if (SystemInfo.IsWindows)
+            if (Platform.IsWindows)
             {
                 Console.WriteLine($"Usege: {Program.Name}.exe 模式 [选项]");
                 Console.WriteLine($"       {Program.Name}.exe [选项]\r\n");

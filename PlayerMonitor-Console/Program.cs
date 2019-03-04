@@ -24,7 +24,6 @@ namespace PlayerMonitor
 
         static void Main(string[] args)
         {
-
             //修改CMD/PowerShell/Linux Shell的配置.
             ConsoleInitializing();
 
@@ -32,7 +31,7 @@ namespace PlayerMonitor
             MainMode.StartAsync();
 
             //Olny Windows Support this
-            while (SystemInfo.IsWindows)
+            while (Platform.IsWindows)
             {
                 ConsoleKeyInfo Input = Console.ReadKey(true);
                 if (Input.Key == ConsoleKey.Q || Input.Key == ConsoleKey.Escape)

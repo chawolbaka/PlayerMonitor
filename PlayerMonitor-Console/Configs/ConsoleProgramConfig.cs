@@ -24,7 +24,7 @@ namespace PlayerMonitor.Configs
         }
         protected virtual void SwitchColorScheme(ConsoleColorScheme newColorScheme)
         {
-            if (!SystemInfo.IsWindows)
+            if (!Platform.IsWindows)
             {
                 throw new PlatformNotSupportedException("it need WinAPI");
             }

@@ -78,7 +78,7 @@ namespace PlayerMonitor.Modes
                     Screen.Clear();
                     Screen.WriteLine("&c错误&r:&f你输入的服务器地址不存在");
                     Screen.WriteLine($"&e详细信息&r:&4{se}");
-                    if (SystemInfo.IsWindows)
+                    if (Platform.IsWindows)
                         Console.ReadKey(true);
                     Environment.Exit(-1);
                 }
@@ -203,7 +203,7 @@ namespace PlayerMonitor.Modes
                         //这边好像不需要处理了?大概是不会到这边才出现错误的吧?
                         Console.BackgroundColor = ConsoleColor.Red;
                         Console.WriteLine("服务器地址错误(找不到这个地址)");
-                        if (SystemInfo.IsWindows)
+                        if (Platform.IsWindows)
                             Console.ReadKey(true);
                         Environment.Exit(-1);
 
@@ -211,7 +211,7 @@ namespace PlayerMonitor.Modes
                     else
                     {
                         PrintTime(ref FirstTime);
-                        if (SystemInfo.IsWindows)
+                        if (Platform.IsWindows)
                         {
                             Console.Title = $"网络发生了一点错误(qwq不要怕!可能过一会就可以恢复啦)";
                             Screen.WriteLine($"&c错误信息&r:&c{e.Message}&e(&c错误代码&f:&c{e.ErrorCode}&e)");
@@ -296,7 +296,7 @@ namespace PlayerMonitor.Modes
             else
             {
                 Console.WriteLine($"已到达最大重试次数({maxTick})");
-                if (SystemInfo.IsWindows)
+                if (Platform.IsWindows)
                     Console.ReadKey(true);
                 Environment.Exit(-1);
             }
