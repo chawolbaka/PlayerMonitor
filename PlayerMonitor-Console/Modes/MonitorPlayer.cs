@@ -38,7 +38,7 @@ namespace PlayerMonitor.Modes
             //注册玩家上下线的事件
             if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerJoin))
             {
-                MainPlayerManager.JoinedEvnt += player =>
+                MainPlayerManager.Joined += player =>
                 {
                     string reg = @"^(\S+)( (.*))?$";
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
@@ -53,7 +53,7 @@ namespace PlayerMonitor.Modes
             }
             if (!string.IsNullOrWhiteSpace(Config.RunCommandForPlayerDisconnected))
             {
-                MainPlayerManager.DisconnectedEvent += player =>
+                MainPlayerManager.Disconnected += player =>
                 {
                     string reg = @"^(\S+)( (.*))?$";
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
@@ -341,10 +341,12 @@ namespace PlayerMonitor.Modes
         //好像其它地方用不到,所以改成内部类了.(可能哪天又会改回去
         private class PlayerManager
         {
-            public delegate void PlayerJoinedEvntHandler(Player player);
-            public delegate void PlayerDisconnectedEvntHandler(Player player);
-            public event PlayerJoinedEvntHandler JoinedEvnt;
-            public event PlayerDisconnectedEvntHandler DisconnectedEvent;
+            public delegate void PlayerJoinedEventHandler(Player player);
+            public delegate void PlayerDisconnectedEventHandler(Player player);
+            public event PlayerJoinedEventHandler Joined;
+            public event PlayerDisconnectedEventHandler Disconnected;
+
+            
 
             public bool? IsOnlineMode;
 
@@ -380,7 +382,7 @@ namespace PlayerMonitor.Modes
                         "[", $"{PlayerList.Count + 1:D2}", "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{NewPlayer.Blood - 1:D2}", "]",
                         "Name:", NewPlayer.Name, "(", $"{NewPlayer.Uuid}", ")");
                     PlayerList.Add(NewPlayer);
-                    JoinedEvnt?.Invoke(NewPlayer);
+                    Joined?.Invoke(NewPlayer);
                 }
                 //LifeTimer();
             }
@@ -408,7 +410,7 @@ namespace PlayerMonitor.Modes
                                 Screen.ReviseField($"{j+1:D2}", 1, PlayerList[j].ScreenTag);
                             }
                         }
-                        DisconnectedEvent?.Invoke(PlayerTmp);
+                        Disconnected?.Invoke(PlayerTmp);
                     }
                     else
                     {
