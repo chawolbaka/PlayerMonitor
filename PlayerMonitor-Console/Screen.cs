@@ -2,7 +2,6 @@
 using System.Text;
 using System.Drawing;
 using System.Collections.Generic;
-using PlayerMonitor.ConsolePlus.ColorSchemes;
 
 namespace PlayerMonitor
 {
@@ -28,22 +27,15 @@ namespace PlayerMonitor
 
         public static string CreateLine(params string[] fields)
         {
-            int y = Lines.Count > 0 ? Lines.Count : 0;
+            //添加行(仅集合内)
             Line NewLine = new Line();
-            NewLine.y = y;
-            //创建标签
-            string tag_temp = Guid.NewGuid().ToString();
-            while (Lines.Count > 0 && Lines.Find(l => l.Tag == tag_temp) != null)
-            {
-                tag_temp = Guid.NewGuid().ToString();
-            }
-            NewLine.Tag = tag_temp;
-            //把字段都添加进去
+            NewLine.y = Lines.Count > 0 ? Lines.Count : 0; 
+            NewLine.Tag = Guid.NewGuid().ToString();
             foreach (var fireld in fields)
             {
                 NewLine.Fields.Add(new Line.Field() { Value = fireld });
-            }
-            //计算每个字段的3种长度
+            }            
+            //计算每个字段的起始位置和结束位置
             for (int i = 0; i < NewLine.Fields.Count; i++)
             {
                 NewLine.Fields[i].Length = GetStringLength(NewLine.Fields[i].Value);
@@ -61,10 +53,10 @@ namespace PlayerMonitor
                     break;
             }
             Lines.Add(NewLine);
-            //Print
+            //把刚刚添加的行输出到控制台
             foreach (var field in NewLine.Fields) 
             {
-                WriteAt(field.Value, field.StartLocation,y);
+                WriteAt(field.Value, field.StartLocation,NewLine.y);
             }
             Console.WriteLine();
             return NewLine.Tag;
@@ -261,6 +253,9 @@ namespace PlayerMonitor
         }
         private static int GetStringLength(string str)
         {
+            //这和string.Length有什么区别?
+            //这边计算的是输出到屏幕上占了多少长度,比如中文会占两个字这样子
+            //(关于颜色代码那块,我已经看不懂我当时是怎么想的了,可是我也不敢直接重写)
             int length = 0;
             for (int i = 0; i < str.Length; i++)
             {
