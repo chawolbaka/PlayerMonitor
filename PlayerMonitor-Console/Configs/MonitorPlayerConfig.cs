@@ -210,7 +210,7 @@ namespace PlayerMonitor.Configs
             
             Console.WriteLine(" --script-logged SCRIPT_DIR\t\t当一个玩家加入服务器后会执行这个程序(如果路径中有空格需要在头尾加双引号)");
             Console.WriteLine(" --script-loggedout SCRIPT_DIR\t\t当一个玩家离开服务器后会执行这个程序(如果路径中有空格需要在头尾加双引号)\r\n");
-			
+			if(Platform.IsWindows)
             Console.WriteLine(" --color-minecraft \t\t\t使用MC的RGB值(仅支持Windows)\r\n");
             Program.Exit(false);
         }
