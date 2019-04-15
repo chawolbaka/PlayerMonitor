@@ -109,7 +109,10 @@ namespace PlayerMonitor.Modes
             {
                 //获取Ping信息
                 PingReply PingResult = ExceptionHandler(Ping.Send);
+                //如果是null就代表状态已经切换为Abort需要停止循环了
                 if (PingResult == null) return;
+                //MC在开启期间被Ping会响应一些不完整的包,我觉得处理方法应该给个提示然后sleep几秒后重新Ping(但是我懒的写提示信息了)
+                if (PingResult.Version==null||PingResult.Player==null) continue;
                 //开始输出信息
                 float? Time = PingResult.Time / 10000.0f;//有点好奇这里我/10000了的话它是null是不是会报错呀...
                 Console.Title = Config.WindowTitleStyle.
@@ -152,7 +155,6 @@ namespace PlayerMonitor.Modes
                 MainPlayerManager.LifeTimer();
                 Thread.Sleep(Config.SleepTime + new Random().Next(0, 256));
             }
-            return;
         }
         private string GetServerVersionNameColor(string serverVersionName)
         {
