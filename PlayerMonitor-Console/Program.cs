@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using PlayerMonitor.Modes;
 using PlayerMonitor.Configs;
+using PlayerMonitor.ConsolePlus;
 
 namespace PlayerMonitor
 {
@@ -49,6 +50,9 @@ namespace PlayerMonitor
                 Console.InputEncoding = Encoding.UTF8;
                 Console.OutputEncoding = Encoding.UTF8;
             }
+            //设置默认字体颜色
+            //(这行删了也可以正常运行,但是如果在使用ColorfullyConsole前使用Console类设置了字体颜色会导致ColorfullyConsole.ResetColor的颜色不对)
+            ColorfullyConsole.Init();
 
             Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs args) {
                 //这边可能需要try一下,以前有一行注释说这里在bash下会报错

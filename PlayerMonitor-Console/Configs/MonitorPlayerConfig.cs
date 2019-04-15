@@ -91,7 +91,7 @@ namespace PlayerMonitor.Configs
                             break;
 
                         default:
-                            ColorfulConsole.WriteLine($"&c错误:\r\n &r未知命令行选项:{argumentList[i]}\r\n");
+                            ColorfullyConsole.WriteLine($"&c错误:\r\n &r未知命令行选项:{argumentList[i]}\r\n");
                             Program.Exit(false);
                             break;
                     }
@@ -100,7 +100,7 @@ namespace PlayerMonitor.Configs
                 {
                     if (argumentList.Count <= i + 1)
                     {
-                        ColorfulConsole.WriteLine($"&c错误:\r\n &r命令行选项 \"&e{argumentList[i]}&r\" 需要一个参数.\r\n");
+                        ColorfullyConsole.WriteLine($"&c错误:\r\n &r命令行选项 \"&e{argumentList[i]}&r\" 需要一个参数.\r\n");
                         Program.Exit(false);
                     }
                     else
@@ -109,7 +109,7 @@ namespace PlayerMonitor.Configs
                 }
                 catch (FormatException)
                 {
-                    ColorfulConsole.Write($"&c错误:\r\n &r命令行选项 \"&e{argumentList[i]}&r\" 的值无法被转换,");
+                    ColorfullyConsole.Write($"&c错误:\r\n &r命令行选项 \"&e{argumentList[i]}&r\" 的值无法被转换,");
                     switch (argumentList[i].ToLower())
                     {
                         case "-p":

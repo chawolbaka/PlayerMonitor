@@ -104,7 +104,7 @@ namespace PlayerMonitor.Modes
         private void StartPrintInfo(object obj)
         {
             Ping Ping = obj as Ping;
-            string Tag_SERVER_VERSION = "", Tag_ONLINE_COUNT = "";
+            Guid Tag_SERVER_VERSION = Guid.Empty, Tag_ONLINE_COUNT = Guid.Empty;
             while (State == States.Running)
             {
                 //获取Ping信息
@@ -457,7 +457,7 @@ namespace PlayerMonitor.Modes
                 public Guid Uuid { get; set; }
                 public string Name { get; set; }
                 public int Blood { get; set; }
-                public string ScreenTag { get; set; }
+                public Guid ScreenTag { get; set; }
 
                 public Player()
                 {

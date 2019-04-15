@@ -9,7 +9,8 @@ namespace PlayerMonitor
     //(QAQ我想不无视也不行呀,要是还要考虑效率的话我怕连一个可以用的版本都发不出来了)
     internal static class Screen
     {
-        private static List<Line> Lines = new List<Line>();
+        private static Dictionary<Guid,Line> Lines = new Dictionary<Guid, Line>();
+
         public static int SetDefaultForegroundColor(Color foregroundColor)
         {
             if (!Platform.IsWindows)
@@ -25,12 +26,12 @@ namespace PlayerMonitor
                 return WinAPI.ReplaceConsoleColor(ConsoleColor.Black, backgroundColor.R, backgroundColor.G, backgroundColor.B);
         }
 
-        public static string CreateLine(params string[] fields)
+        public static Guid CreateLine(params string[] fields)
         {
             //添加行(仅集合内)
             Line NewLine = new Line();
             NewLine.y = Lines.Count > 0 ? Lines.Count : 0; 
-            NewLine.Tag = Guid.NewGuid().ToString();
+            Guid Tag = Guid.NewGuid();
             foreach (var fireld in fields)
             {
                 NewLine.Fields.Add(new Line.Field() { Value = fireld });
@@ -52,90 +53,90 @@ namespace PlayerMonitor
                 else
                     break;
             }
-            Lines.Add(NewLine);
+            Lines.Add(Tag,NewLine);
             //把刚刚添加的行输出到控制台
             foreach (var field in NewLine.Fields) 
             {
                 WriteAt(field.Value, field.StartLocation,NewLine.y);
             }
             Console.WriteLine();
-            return NewLine.Tag;
+            return Tag;
         }
-        public static void ReviseField(string newValue,int location, string tag)
+        public static void ReviseField(string newValue,int location, Guid tag)
         {
-            Line FoundLine = Lines.Find(x => x.Tag == tag);
-            if (FoundLine == null)
-                throw new ArgumentException("Tag does not exist", nameof(tag));
-            if (FoundLine.Fields[location].Value == newValue)
+            Line destLine = Lines[tag];
+
+            if (destLine.Fields[location].Value == newValue)
                 return;
+
             int NewValueLength = GetStringLength(newValue);
-            int OldValueLength = GetStringLength(FoundLine.Fields[location].Value);
-            int y = FoundLine.y;
+            int OldValueLength = GetStringLength(destLine.Fields[location].Value);
+            int y = destLine.y;
             //长度相同的话只做替换处理,如果不同的话就要重新计算长度然后把后面的全拆了QAQ
             if (NewValueLength == OldValueLength)
             {
-                WriteAt(newValue, FoundLine.Fields[location].StartLocation, FoundLine.y);
+                WriteAt(newValue, destLine.Fields[location].StartLocation, destLine.y);
             }
             else
             {
                 //重新计算长度
-                for (int i = location; i < FoundLine.Fields.Count; i++)
+                for (int i = location; i < destLine.Fields.Count; i++)
                 {
                     if (i == location)
-                        FoundLine.Fields[i].Length = NewValueLength;
+                        destLine.Fields[i].Length = NewValueLength;
                     else
-                        FoundLine.Fields[i].Length = GetStringLength(FoundLine.Fields[i].Value);
+                        destLine.Fields[i].Length = GetStringLength(destLine.Fields[i].Value);
 
-                    FoundLine.Fields[i].StartLocation = FoundLine.Fields[i - 1].EndLocation;
-                    FoundLine.Fields[i].EndLocation = FoundLine.Fields[i].StartLocation + FoundLine.Fields[i].Length;
+                    destLine.Fields[i].StartLocation = destLine.Fields[i - 1].EndLocation;
+                    destLine.Fields[i].EndLocation = destLine.Fields[i].StartLocation + destLine.Fields[i].Length;
                 }
                 //把新的内容输出到控制台上
-                WriteAt(newValue, FoundLine.Fields[location].StartLocation, FoundLine.y);
+                WriteAt(newValue, destLine.Fields[location].StartLocation, destLine.y);
                 //重新输出一下后面的那些字段
-                for (int i = location + 1; i < FoundLine.Fields.Count; i++)
+                for (int i = location + 1; i < destLine.Fields.Count; i++)
                 {
-                    WriteAt(FoundLine.Fields[i].Value, FoundLine.Fields[i].StartLocation, y);
+                    WriteAt(destLine.Fields[i].Value, destLine.Fields[i].StartLocation, y);
                 }
                 //清理历史残留
-                int ClearLength = Console.BufferWidth - FoundLine.Fields[FoundLine.Fields.Count - 1].EndLocation;
-                WriteWhiteSpaceAt(ClearLength, FoundLine.Fields[FoundLine.Fields.Count - 1].EndLocation, y);
+                int ClearLength = Console.BufferWidth - destLine.Fields[destLine.Fields.Count - 1].EndLocation;
+                WriteWhiteSpaceAt(ClearLength, destLine.Fields[destLine.Fields.Count - 1].EndLocation, y);
             }
-            FoundLine.Fields[location].Value = newValue;
+            destLine.Fields[location].Value = newValue;
         }
-        public static void RemoveLine(string tag,bool rePirint=false)
+        public static void RemoveLine(Guid tag,bool rePirint=false)
         {
-            Line FindResult = Lines.Find(x => x.Tag == tag);
-            if (FindResult == null)
-                throw new ArgumentOutOfRangeException(nameof(tag), $"Tag \"{tag}\" does not exist");
-            Lines.Remove(FindResult);
+            Line removeLine = Lines[tag];
+            Lines.Remove(tag);
             int ClearLength = Console.BufferWidth;
 
-            if (Lines.Count==FindResult.y)
+            if (Lines.Count==removeLine.y)
             {
-                WriteWhiteSpaceAt(ClearLength, 0, FindResult.y);
+                WriteWhiteSpaceAt(ClearLength, 0, removeLine.y);
             }
             else
             {
-                for (int i = FindResult.y; i < Lines.Count; i++)
+                foreach (var line in Lines.Values)
                 {
-                    Lines[i].y --;
-                    if (rePirint)
+                    if (line.y>=removeLine.y)
                     {
-                        WriteWhiteSpaceAt(ClearLength, 0, Lines[i].y);
-                        WriteWhiteSpaceAt(ClearLength, 0, Lines[i].y + 1);
-                        foreach (var Field in Lines[i].Fields)
+                        line.y--;
+                        if (rePirint)
                         {
-                            WriteAt(Field.Value, Field.StartLocation, Lines[i].y);
+                            WriteWhiteSpaceAt(ClearLength, 0, line.y);
+                            WriteWhiteSpaceAt(ClearLength, 0, line.y + 1);
+                            foreach (var Field in line.Fields)
+                            {
+                                WriteAt(Field.Value, Field.StartLocation, line.y);
+                            }
                         }
                     }
                 }
             }
             Console.SetCursorPosition(Console.CursorLeft, Console.CursorTop-1);
         }
-        public static bool HasLine(string tag)
+        public static bool HasLine(Guid tag)
         {
-            Line Result = Lines.Find(x => x.Tag == tag);
-            return Result == null ? false : true;
+            return Lines.ContainsKey(tag);
         }
         public static void Clear()
         {
@@ -150,10 +151,10 @@ namespace PlayerMonitor
         {
             int buff_top = Console.CursorTop;
             int buff_left = Console.CursorLeft;
-            bool HasColorCode = s.Contains("&");
             Console.CursorVisible = false;
             Console.SetCursorPosition(x, y);
-            if (HasColorCode)
+            //颜色代码至少占2个字符,所以长度不满3的情况下可以直接用Console输出来提升一点点效率(大概可以?)
+            if (s.Length>2)
                 CorlorsPrint(s);
             else
                 Console.Write(s);
@@ -167,7 +168,7 @@ namespace PlayerMonitor
                 StringBuilder WhiteSpace = new StringBuilder();
                 for (int i = 0; i < length; i++)
                 {
-                    WhiteSpace.Append(" ");
+                    WhiteSpace.Append(' ');
                 }
                 WriteAt(WhiteSpace.ToString(), start_x, start_y);
             }
@@ -306,7 +307,6 @@ namespace PlayerMonitor
         {
             public int y { get; set; }
             public List<Field> Fields { get; set; } = new List<Field>();
-            public string Tag { get; set; }
             public class Field
             {
                 public string Value { get; set; }

@@ -16,7 +16,7 @@ namespace PlayerMonitor.Modes
             Running,
             Abort
         }
-        protected States State { get; set; }
+        protected virtual States State { get; set; }
 
         public abstract string Name { get;}
         public abstract string Description { get;}
