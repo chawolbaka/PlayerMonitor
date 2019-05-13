@@ -9,8 +9,8 @@ using System.Text.RegularExpressions;
 using System.Net;
 using System.Text;
 using System.Collections.Generic;
-using System.Linq;
 using PlayerMonitor.Configs;
+using PlayerMonitor.ConsolePlus;
 #if DoNet
 using System.Drawing;
 using System.IO;
@@ -76,8 +76,8 @@ namespace PlayerMonitor.Modes
                 if (se.SocketErrorCode == SocketError.HostNotFound)
                 {
                     Screen.Clear();
-                    Screen.WriteLine("&c错误&r:&f你输入的服务器地址不存在");
-                    Screen.WriteLine($"&e详细信息&r:&4{se}");
+                    ColorfullyConsole.WriteLine("&c错误&r:&f你输入的服务器地址不存在");
+                    ColorfullyConsole.WriteLine($"&e详细信息&r:&4{se}");
                     if (Platform.IsWindows)
                         Console.ReadKey(true);
                     Environment.Exit(-1);
@@ -118,7 +118,7 @@ namespace PlayerMonitor.Modes
                 Console.Title = Config.WindowTitleStyle.
                     Replace("$IP", Config.ServerHost).
                     Replace("$PORT", Config.ServerPort.ToString()).
-                    Replace("$PING_TIME", Time != null ?$"{(float)Time:F2}": $"{short.MinValue}");
+                    Replace("$PING_TIME", Time != null ?$"{(float)Time:F2}": $"{-1}");
                 if (IsFirstPrint)
                 {
                     Screen.Clear();
@@ -216,12 +216,12 @@ namespace PlayerMonitor.Modes
                         if (Platform.IsWindows)
                         {
                             Console.Title = $"网络发生了一点错误(qwq不要怕!可能过一会就可以恢复啦)";
-                            Screen.WriteLine($"&c错误信息&r:&c{e.Message}&e(&c错误代码&f:&c{e.ErrorCode}&e)");
+                            ColorfullyConsole.WriteLine($"&c错误信息&r:&c{e.Message}&e(&c错误代码&f:&c{e.ErrorCode}&e)");
                         }
                         else
                         {
                             Console.Title = $"发生了网络异常";
-                            Screen.WriteLine($"&e详细信息&r:&c{e}");
+                            ColorfullyConsole.WriteLine($"&e详细信息&r:&c{e}");
                         }
                         RetryHandler(ref RetryTime, ref TryTick, MaxTryTick);
                         continue;
@@ -254,13 +254,13 @@ namespace PlayerMonitor.Modes
                         }
                     }
                     PrintTime(ref FirstTime);
-                    Screen.WriteLine("&cjson解析错误&f:&r服务器返回了一个无法被解析的json");
+                    ColorfullyConsole.WriteLine("&cjson解析错误&f:&r服务器返回了一个无法被解析的json");
                     if (SLPResult != null)
                     {
-                        Screen.WriteLine($"&e无法被解析的json&f:");
-                        Screen.WriteLine($"{SLPResult.ToString()}");
+                        ColorfullyConsole.WriteLine($"&e无法被解析的json&f:");
+                        ColorfullyConsole.WriteLine($"{SLPResult.ToString()}");
                     }
-                    Screen.WriteLine($"&e详细信息&r:&c{je}");
+                    ColorfullyConsole.WriteLine($"&e详细信息&r:&c{je}");
                     RetryHandler(ref RetryTime, ref TryTick, MaxTryTick);
                     continue;
                 }
@@ -286,15 +286,15 @@ namespace PlayerMonitor.Modes
             IsFirstPrint = true;
             //Print Info
             PrintTime(ref firstTime);
-            Screen.WriteLine($"&e详细信息&r:&c{e}");
+            ColorfullyConsole.WriteLine($"&e详细信息&r:&c{e}");
             RetryHandler(ref retryTime, ref tryTick, maxTryTick);
         }
         private void RetryHandler(ref int retryTime, ref int tick, int maxTick)
         {
             if (tick == 0)
-                Screen.WriteLine($"将在&f{(retryTime / 1000.0f):F2}&r秒后尝试重新连接服务器");
+                ColorfullyConsole.WriteLine($"将在&f{(retryTime / 1000.0f):F2}&r秒后尝试重新连接服务器");
             else if (tick < maxTick)
-                Screen.WriteLine($"&e已重试&r:&f{tick}次,{(retryTime / 1000.0f):F2}秒后将继续尝试去重新连接服务器");
+                ColorfullyConsole.WriteLine($"&e已重试&r:&f{tick}次,{(retryTime / 1000.0f):F2}秒后将继续尝试去重新连接服务器");
             else
             {
                 Console.WriteLine($"已到达最大重试次数({maxTick})");
@@ -325,12 +325,12 @@ namespace PlayerMonitor.Modes
             if (firstTime == null)
             {
                 firstTime = DateTime.Now;
-                Screen.WriteLine($"&f发生时间&r:&e{firstTime}");
+                ColorfullyConsole.WriteLine($"&f发生时间&r:&e{firstTime}");
             }
             else
             {
-                Screen.WriteLine($"&f发生时间(首次)&r:&e{firstTime}");
-                Screen.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now}");
+                ColorfullyConsole.WriteLine($"&f发生时间(首次)&r:&e{firstTime}");
+                ColorfullyConsole.WriteLine($"&f发生时间(本次)&r:&e{DateTime.Now}");
             }
         }
 
@@ -364,7 +364,7 @@ namespace PlayerMonitor.Modes
                 int DefPlayerBlood = PlayerList.Count < 12 ? 2 : Config.Blood;
                 if (Config == null)
                     throw new Exception("Not Initializtion");
-                Player FoundPlayer = PlayerList.Find(x => x.Uuid.ToString().Replace("-", "") == uuid.ToString().Replace("-", ""));
+                Player FoundPlayer = PlayerList.Find(p => p.Name==name&&p.Uuid==uuid);
                 if (FoundPlayer != null) //如果找到了这个玩家就把它的血恢复到默认值(回血)
                 {
                     FoundPlayer.Blood = DefPlayerBlood;
