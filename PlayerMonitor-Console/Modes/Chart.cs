@@ -6,10 +6,12 @@ using Newtonsoft.Json.Linq;
 using MinecraftProtocol.Utils;
 using MinecraftProtocol.DataType;
 using System.Threading;
+using System.Linq;
+using PlayerMonitor.Configs;
 
 namespace PlayerMonitor.Modes
 {
-    public class Chart:Mode
+    public class Chart : Mode
     {
         public override string Name => nameof(Chart);
         public override string Description => "每x分钟记录下玩家的数量,存储成json(仅存储)";
@@ -18,49 +20,50 @@ namespace PlayerMonitor.Modes
         public int Interval { get; set; } = 1000 * 30;
 
         //我不知道应该有什么名字,json里面的字段名我可能会修改所以需要一个版本号
-        private readonly string Version="1.0.0";
+        private readonly string Version = "1.0.0";
         private string DataPath;
-        private Configuration Config;
+        private MonitorPlayerConfig Config;
         private Ping ping;
 
-        public Chart(Configuration config,string path)
+        public Chart(string savePath)
         {
             State = States.Initializing;
-            Config = config != null ? config : throw new ArgumentNullException(nameof(config));
-            DataPath = string.IsNullOrWhiteSpace(path) != true ? path : throw new ArgumentNullException(nameof(path));
-            ping = new Ping(Config.ServerHost, Config.ServerPort);
+            //先这样子用着隔壁的,反正这类也不会被加载到
+            Config = new MonitorPlayerConfig(Environment.GetCommandLineArgs().ToList());
+            DataPath = string.IsNullOrWhiteSpace(savePath) != true ? savePath : throw new ArgumentNullException(nameof(savePath));
+            ping = new Ping(Config.ServerHost,Config.ServerPort);
         }
         public override void Start()
         {
             State = States.Running;
-            
-            while (State==States.Running)
+
+            while (State == States.Running)
             {
                 PingReply PingResult = ping.Send();
                 if (Directory.Exists(DataPath) == false)
                     Directory.CreateDirectory(DataPath);
-                string FileName= Path.Combine(DataPath, $"{DateTime.Now:yyyy-MM-dd)}.json");
+                string FileName = Path.Combine(DataPath, $"{DateTime.Now:yyyy-MM-dd)}.json");
                 if (File.Exists(FileName) == false)
-                    CreateJson(FileName,PingResult);
+                    CreateJson(FileName, PingResult);
                 if (ToPrintInfo)
                     Console.WriteLine($"[{DateTime.Now}]玩家数量:{PingResult.Player.Online}");
-                WriteData(FileName,PingResult);
+                WriteData(FileName, PingResult);
                 Thread.Sleep(Interval);
             }
         }
         public override void StartAsync() => new Thread(x => Start()).Start();
-        
-        private void CreateJson(string fileName,PingReply pingInfo)
+
+        private void CreateJson(string fileName, PingReply pingInfo)
         {
             var json = new JObject(
                         new JProperty("type", "CHART:PLAYER_ONLIE"),
-                        new JProperty("version",Version),
-                        new JProperty("date",DateTime.Now.ToString("yyyy-mm-dd")),
-                        new JProperty("server_host",Config.ServerHost),
-                        new JProperty("server_port",Config.ServerPort),
+                        new JProperty("version", Version),
+                        new JProperty("date", DateTime.Now.ToString("yyyy-mm-dd")),
+                        new JProperty("server_host", Config.ServerHost),
+                        new JProperty("server_port", Config.ServerPort),
                         new JProperty("max_player", pingInfo.Player.Max),
                         new JProperty("data"));
-            StreamWriter stream = new StreamWriter(fileName,false,Encoding.UTF8);
+            StreamWriter stream = new StreamWriter(fileName, false, Encoding.UTF8);
             stream.Write(json.ToString(Formatting.None));
             stream.Flush();
             stream.Close();
@@ -76,7 +79,7 @@ namespace PlayerMonitor.Modes
                     new JObject(
                         new JProperty("time", DateTime.Now.ToString("HH:mm:ss")),
                         new JProperty("online", PingInfo.Player.Online),
-                        new JProperty("delay",Ping_Pong_Time)
+                        new JProperty("delay", Ping_Pong_Time)
                         ));
                 json["data"] = DataArray;
                 StreamWriter stream = new StreamWriter(fileName, false, Encoding.UTF8);

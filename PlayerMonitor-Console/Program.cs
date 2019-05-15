@@ -1,34 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using PlayerMonitor.Modes;
 using PlayerMonitor.Configs;
 using PlayerMonitor.ConsolePlus;
 
 namespace PlayerMonitor
 {
-    
+
     class Program
     {
         public static readonly string Name = "PlayerMonitor";
         public static readonly string Version = "bata 0.2";
 
-        public static bool UseCompatibilityMode = true;//之后在处理这个先直接全部兼容模式
+        //Win10以下的Windows全部使用兼容模式
+        public static bool UseCompatibilityMode = !(Platform.IsWindows&&Environment.OSVersion.Version.Major>= 10);
 
-        //即将废弃(等我想出运行模式存储的地方叫什么名字就删掉你)
-        private static Configuration Config = new Configuration();
         private static Mode MainMode;
 
         static void Main(string[] args)
         {
             //修改CMD/PowerShell/Linux Shell的配置.
             ConsoleInitializing();
-
-            MainMode = CrerteMode(Config.RunningMode, args.ToList());//创建主模式的实例
+            MainMode = CrerteModeByConsoleOption(args.ToList());//创建主模式的实例
             MainMode.StartAsync();
 
             //Olny Windows Support this
@@ -40,16 +35,23 @@ namespace PlayerMonitor
                     Console.CursorVisible = true;
                     Environment.Exit(0);
                 }
+                else if (Input.Key == ConsoleKey.F5)
+                    Screen.Refurbih();//bug:隔壁线程在写东西的时候如果用户去按F5会崩溃
             }
         }
         private static void ConsoleInitializing()
         {
+            //linux下设置终端标题感觉不太好的样子(虽然后面还是会设置
+            if (Platform.IsWindows)
+                Console.Title = $"{Program.Name}({Program.Version})";
+            
             //在一些Windows下不知道为什么会乱码/字显示不全这样子的问题,只有在非兼容模式下修改编码
             if (!UseCompatibilityMode)
             {
                 Console.InputEncoding = Encoding.UTF8;
                 Console.OutputEncoding = Encoding.UTF8;
             }
+
             //设置默认字体颜色
             //(这行删了也可以正常运行,但是如果在使用ColorfullyConsole前使用Console类设置了字体颜色会导致ColorfullyConsole.ResetColor的颜色不对)
             ColorfullyConsole.Init();
@@ -61,9 +63,22 @@ namespace PlayerMonitor
             };
 
         }
-        private static Mode CrerteMode(Mode.Type modeType, List<string> args)
+        private static Mode CrerteModeByConsoleOption(List<string> args)
         {
-            switch (modeType)
+            const Mode.Type DefaultMode = Mode.Type.Monitor;
+            Mode.Type RunningMode = DefaultMode;
+            //从命令行选项读取要创建的模式
+            if (args.Count>0)
+            {
+                switch (args[0])
+                {
+                    case "Monitor": RunningMode = Mode.Type.Monitor; break;
+                    case "Chart": RunningMode = Mode.Type.Chart; break;
+                    default: RunningMode = DefaultMode; break;
+                }
+            }
+            //创建模式
+            switch (RunningMode)
             {
                 case Mode.Type.Chart:
                     throw new NotImplementedException("not support now");
