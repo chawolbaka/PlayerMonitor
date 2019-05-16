@@ -18,8 +18,8 @@ Echo     4 FDD
 :RECHOICE
 Set /P Choice=		Your Choose: 
 If not "%Choice%"=="" (
-  If "%Choice%"=="2" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x86
-  If "%Choice%"=="3" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x64
+  If "%Choice%"=="2" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x86 /p:TrimUnusedDependencies=true
+  If "%Choice%"=="3" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x64 /p:TrimUnusedDependencies=true
   If "%Choice%"=="4" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release
   If "%Choice%"=="1" (
   dotnet add PlayerMonitor-Console\PlayerMonitor.csproj package Microsoft.DotNet.ILCompiler -v 1.0.0-alpha-*
