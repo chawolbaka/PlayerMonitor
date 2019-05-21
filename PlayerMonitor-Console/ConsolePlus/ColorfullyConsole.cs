@@ -16,9 +16,8 @@ namespace PlayerMonitor.ConsolePlus
         public static bool UseCompatibilityMode { get; set; }
         public const char DefaultColorCodeMark = '&';
 
-        static ColorfullyConsole() => Init();
+        //static ColorfullyConsole() => Init();
 
-        /// <summary>初始化是被强制执行的,但是请尽量在程序启动期间就执行初始化</summary>
         public static void Init()
         {
 #if COMPATIBILITY_MODE
@@ -27,12 +26,17 @@ namespace PlayerMonitor.ConsolePlus
 
             if (Platform.IsWindows)
             {
-                OutputHandle = WinAPI.GetStdHandle(WinAPI.STD_OUTPUT_HANDLE);
-                IsWindows10 = Environment.OSVersion.Version.Major >= 10;
-                if(IsWindows10)
+            #if !CORE_RT
+                IsWindows10 = IsWindows10 = Environment.OSVersion.Version.Major >= 10;
+            #endif
+                if (IsWindows10)
                 {
                     WinAPI.GetConsoleMode(OutputHandle, out uint consoleMode);
                     WinAPI.SetConsoleMode(OutputHandle, consoleMode | (uint)WinAPI.ConsoleModes.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+                }
+                else
+                {
+                    OutputHandle = WinAPI.GetStdHandle(WinAPI.STD_OUTPUT_HANDLE);
                 }
             }
 #endif
@@ -355,7 +359,8 @@ namespace PlayerMonitor.ConsolePlus
             //为什么不直接输出而要缓存?
             //因为我不想一个个字出现,想尽量一次性输出那些字
             StringBuilder sb = new StringBuilder();
-            ushort ColorAttribute = (ushort)DefaultForegroundColor;
+            ushort DefaultColorAttribute = (ushort)((ushort)DefaultForegroundColor | (ushort)DefaultBackgroundColor << 4);
+            ushort ColorAttribute = DefaultColorAttribute;
             for (int i = 0; i < s.Length; i++)
             {
                 if (s[i] == mark && i != s.Length - 1)
@@ -364,7 +369,7 @@ namespace PlayerMonitor.ConsolePlus
                     sb.Clear();
                     //在设置颜色前需要把颜色位清理,不清0的话会遇到这种问题:15|1=15(下划线只能通过&r取消)
                     if (s[i + 1] != 'n')
-                        ColorAttribute &= WinAPI.ConsoleColorAttributes.COMMON_LVB_UNDERSCORE;
+                        ColorAttribute &= WinAPI.ConsoleColorAttributes.COMMON_LVB_UNDERSCORE | 0b1111_0000;
                     switch (s[i + 1])
                     {
                         case '0': ColorAttribute |= 0x0; i++; break; //Black
@@ -384,7 +389,7 @@ namespace PlayerMonitor.ConsolePlus
                         case 'e': ColorAttribute |= 0xE; i++; break; //Yellow
                         case 'f': ColorAttribute |= 0xF; i++; break; //White
                         case 'n': ColorAttribute |= WinAPI.ConsoleColorAttributes.COMMON_LVB_UNDERSCORE; i++; break;
-                        case 'r': ColorAttribute = (ushort)DefaultForegroundColor; ResetColor(); i++; continue;
+                        case 'r': ColorAttribute = DefaultColorAttribute; ResetColor(); i++; continue;
                         default: Console.Write(mark); continue;
                     }
                     WinAPI.SetConsoleTextAttribute(OutputHandle, ColorAttribute);

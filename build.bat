@@ -23,11 +23,11 @@ If not "%Choice%"=="" (
   If "%Choice%"=="4" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release
   If "%Choice%"=="1" (
   dotnet add PlayerMonitor-Console\PlayerMonitor.csproj package Microsoft.DotNet.ILCompiler -v 1.0.0-alpha-*
-  dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x64
+  dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x64 /p:CORE_RT=TRUE
   dotnet remove PlayerMonitor-Console\PlayerMonitor.csproj package Microsoft.DotNet.ILCompiler
   )
 )
-If exist PlayerMonitor-Console\bin\Release\netcoreapp2.1\win-x64\native goto :BUILD_COMPLETE
+If exist PlayerMonitor-Console\bin\Release\netcoreapp2.1\win-x64\native\PlayerMonitor.exe goto :BUILD_COMPLETE
 If exist PlayerMonitor-Console\bin\Release\netcoreapp2.1\publish\PlayerMonitor.dll goto :BUILD_COMPLETE
 If exist PlayerMonitor-Console\bin\Release\netcoreapp2.1\win-x86\publish\PlayerMonitor.exe goto :BUILD_COMPLETE
 If exist PlayerMonitor-Console\bin\Release\netcoreapp2.1\win-x64\publish\PlayerMonitor.exe goto :BUILD_COMPLETE
