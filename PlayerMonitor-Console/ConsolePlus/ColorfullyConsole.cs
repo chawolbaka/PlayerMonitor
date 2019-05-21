@@ -198,7 +198,7 @@ namespace PlayerMonitor.ConsolePlus
         }
         public static void Clear()
         {
-            if (!UseCompatibilityMode && (Platform.IsLinux || Platform.IsWindows))
+            if (!UseCompatibilityMode && Platform.IsLinux )
             {
                 //bug:CoreRT编译的虽然有清屏的效果,但是\x1b[2J会被显示出来
                 Console.Write(ANSI.EscapeCode.CleanScreen);
@@ -477,7 +477,7 @@ namespace PlayerMonitor.ConsolePlus
             }
 
             if (OutputText.Length > 0)
-                OutputText.Append("\x1b[0m");//重置颜色和样式
+                OutputText.Append(ANSI.EscapeCode.ColorOff);//重置颜色和样式
             Console.Write(OutputText);
         }
         //使用ANSI实现

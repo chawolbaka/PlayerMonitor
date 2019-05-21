@@ -179,7 +179,6 @@ namespace PlayerMonitor.Configs
                     InputPrompt_Port = "你输入的不是一个有效的端口号,请重新输入:";
                 Console.ResetColor();
             }
-            Console.Clear();//要不要清屏这个问题我有点犹豫的,写完再看看要不要清吧.
             return true;
         }
 
