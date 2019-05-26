@@ -11,10 +11,6 @@ using System.Text;
 using System.Collections.Generic;
 using PlayerMonitor.Configs;
 using PlayerMonitor.ConsolePlus;
-#if DoNet
-using System.Drawing;
-using System.IO;
-#endif
 
 namespace PlayerMonitor.Modes
 {
@@ -125,22 +121,6 @@ namespace PlayerMonitor.Modes
                     MainPlayerManager.Clear();
                     Tag_SERVER_VERSION = Screen.CreateLine("服务端版本:", "");
                     Tag_ONLINE_COUNT = Screen.CreateLine("在线人数:", "");
-#if DoNet
-                    if (!string.IsNullOrWhiteSpace(PingResult.Icon))
-                    {
-                        byte[] Icon_bytes = Convert.FromBase64String(
-                            PingResult.Icon.Replace("data:image/png;base64,", ""));
-                        using (MemoryStream ms = new MemoryStream(Icon_bytes))
-                        {
-                            try {
-                                Bitmap Icon = new Bitmap(ms);
-                                //不知道为什么好像用不了,可能.net core不支持这个东西?
-                                //(到时候编译.net 版本的看看有不有效果吧,没有的话就删除这个功能)
-                                WinAPI.SetConsoleIcon(Icon.GetHicon());
-                            } catch { throw; }
-                        }
-                    }
-#endif
                     IsFirstPrint = false;
                 }
                 Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_SERVER_VERSION);
