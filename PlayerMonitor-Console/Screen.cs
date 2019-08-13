@@ -9,7 +9,8 @@ namespace PlayerMonitor
     //无视效率,只要不造成闪烁就可以啦
     //(QAQ我想不无视也不行呀,要是还要考虑效率的话我怕连一个可以用的版本都发不出来了)
     internal static class Screen
-    {        
+    {
+
         private static Dictionary<Guid, Line> Lines = new Dictionary<Guid, Line>();
 
         public static int SetDefaultForegroundColor(Color foregroundColor)
@@ -29,6 +30,8 @@ namespace PlayerMonitor
 
         public static Guid CreateLine(params string[] fields)
         {
+            if (fields is null || fields.Length <= 0)
+                throw new ArgumentNullException(nameof(fields));
             //添加行(仅集合内)
             Line NewLine = new Line();
             NewLine.y = Lines.Count;
@@ -192,12 +195,17 @@ namespace PlayerMonitor
         }
         private static int GetStringLength(string str)
         {
-            //这和string.Length有什么区别?
-            //这边给的是输出到终端后占的长度,比如中文会占两个字这样子
+            //这和string.Length有什么区别? 
+            //这边给的是输出到终端后占的长度
+            //大概就是颜色代码不会被计算进去,然后中文是占两个字符的。
             int length = 0;
+            const byte AsciiCharLength = 1;
+            const byte ChineseCharLength = 2;
+            
             for (int i = 0; i < str.Length; i++)
             {
-                if (str[i] =='&'&&i!=str.Length-1)
+                //样式代码会直接被跳过,不会被计算进去
+                if (str[i] == '&' && i != str.Length - 1)
                 {
                     switch (str[i + 1])
                     {
@@ -225,11 +233,8 @@ namespace PlayerMonitor
                         continue;
                     }
                 }
-                if (Encoding.UTF8.GetBytes(str[i].ToString()).Length > 1)
-                    length += 2;
-                else
-                    length++;
-
+                //如果不是样式代码的话就可以正常处理了，这边中文占2格 英文占1格
+                length += Encoding.UTF8.GetByteCount(str[i].ToString()) > 1 ? ChineseCharLength : AsciiCharLength;
             }
             return length;
         }

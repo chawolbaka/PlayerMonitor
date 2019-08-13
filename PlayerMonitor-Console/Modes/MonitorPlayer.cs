@@ -11,7 +11,6 @@ using System.Text;
 using System.Collections.Generic;
 using PlayerMonitor.Configs;
 using PlayerMonitor.ConsolePlus;
-
 namespace PlayerMonitor.Modes
 {
     public class MonitorPlayer : Mode
@@ -23,7 +22,7 @@ namespace PlayerMonitor.Modes
         private delegate PingReply Run();
         private MonitorPlayerConfig Config;
         private PlayerManager MainPlayerManager;
-        private Ping Ping;
+        private Ping SLP;
         private bool IsFirstPrint = true;
 
         public MonitorPlayer(MonitorPlayerConfig config)
@@ -36,7 +35,7 @@ namespace PlayerMonitor.Modes
             {
                 MainPlayerManager.Joined += player =>
                 {
-                    string reg = @"^(\S+)( (.*))?$";
+                    const string reg = @"^(\S+)( (.*))?$";
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
                     StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerJoin, reg, "$1");
                     if (Config.RunCommandForPlayerJoin.Contains(" "))
@@ -51,7 +50,7 @@ namespace PlayerMonitor.Modes
             {
                 MainPlayerManager.Disconnected += player =>
                 {
-                    string reg = @"^(\S+)( (.*))?$";
+                    const string reg = @"^(\S+)( (.*))?$";
                     ProcessStartInfo StartInfo = new ProcessStartInfo();
                     StartInfo.FileName = Regex.Replace(Config.RunCommandForPlayerDisconnected, reg, "$1");
                     if (Config.RunCommandForPlayerDisconnected.Contains(" "))
@@ -65,7 +64,7 @@ namespace PlayerMonitor.Modes
             //解析服务器地址(如果是域名的话)
             try
             {
-                Ping = new Ping(Config.ServerHost, Config.ServerPort);
+                SLP = new Ping(Config.ServerHost, Config.ServerPort);
             }
             catch (SocketException se)
             {
@@ -74,9 +73,7 @@ namespace PlayerMonitor.Modes
                     Screen.Clear();
                     ColorfullyConsole.WriteLine("&c错误&r:&f你输入的服务器地址不存在");
                     ColorfullyConsole.WriteLine($"&e详细信息&r:&4{se}");
-                    if (Platform.IsWindows)
-                        Console.ReadKey(true);
-                    Environment.Exit(-1);
+                    Program.Exit(-1);
                 }
             }
             State = States.Initialized;
@@ -84,13 +81,13 @@ namespace PlayerMonitor.Modes
         public override void Start()
         {
             State = States.Running;
-            StartPrintInfo(Ping);
+            StartPrintInfo(SLP);
         }
         public override void StartAsync()
         {
             State = States.Running;
             Thread PrintThread = new Thread(StartPrintInfo);
-            PrintThread.Start(Ping);
+            PrintThread.Start(SLP);
         }
         public void Abort()
         {
@@ -99,17 +96,17 @@ namespace PlayerMonitor.Modes
 
         private void StartPrintInfo(object obj)
         {
-            Ping Ping = obj as Ping;
-            Guid Tag_SERVER_VERSION = Guid.Empty, Tag_ONLINE_COUNT = Guid.Empty;
+            Ping SLP = obj as Ping;
+            Guid Tag_ONLINE_COUNT = Guid.Empty;
             while (State == States.Running)
             {
                 //获取Ping信息
-                PingReply PingResult = ExceptionHandler(Ping.Send);
+                PingReply PingResult = ExceptionHandler(SLP.Send);
                 //如果是null就代表状态已经切换为Abort需要停止循环了
                 if (PingResult == null) return;
                 //MC在开启期间被Ping会响应一些不完整的包,我觉得处理方法应该给个提示然后sleep几秒后重新Ping(但是我懒的写提示信息了)
                 if (PingResult.Version==null||PingResult.Player==null) continue;
-                //开始输出信息
+                //开始输出信息(这部分代码会导致树莓派下的Screen无法正常输出)
                 float? Time = PingResult.Time / 10000.0f;//有点好奇这里我/10000了的话它是null是不是会报错呀...
                 Console.Title = Config.WindowTitleStyle.
                     Replace("$IP", Config.ServerHost).
@@ -119,11 +116,10 @@ namespace PlayerMonitor.Modes
                 {
                     Screen.Clear();
                     MainPlayerManager.Clear();
-                    Tag_SERVER_VERSION = Screen.CreateLine("服务端版本:", "");
-                    Tag_ONLINE_COUNT = Screen.CreateLine("在线人数:", "");
+                    Screen.CreateLine("服务端版本:", GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')));
+                    Tag_ONLINE_COUNT = Screen.CreateLine("在线人数:", $"&f{PingResult.Player.Online}/{PingResult.Player.Max}");
                     IsFirstPrint = false;
                 }
-                Screen.ReviseField(GetServerVersionNameColor(PingResult.Version.Name.Replace('§', '&')), 1, Tag_SERVER_VERSION);
                 Screen.ReviseField($"&f{PingResult.Player.Online}/{PingResult.Player.Max}", 1, Tag_ONLINE_COUNT);
                 if (PingResult.Player.Samples != null)
                 {
@@ -131,10 +127,12 @@ namespace PlayerMonitor.Modes
                     {
                         MainPlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
                     }
+                    MainPlayerManager.LifeTimer();
                 }
-                MainPlayerManager.LifeTimer();
+
                 Thread.Sleep(Config.SleepTime + new Random().Next(0, 256));
             }
+            Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}: 主线程已停止");
         }
         private string GetServerVersionNameColor(string serverVersionName)
         {
@@ -314,12 +312,6 @@ namespace PlayerMonitor.Modes
             }
         }
 
-        public void ReplyHandler(PingReply pingReply)
-        {
-            throw new NotImplementedException();
-        }
-        
-
         //好像其它地方用不到,所以改成内部类了.(可能哪天又会改回去
         private class PlayerManager
         {
@@ -327,10 +319,6 @@ namespace PlayerMonitor.Modes
             public delegate void PlayerDisconnectedEventHandler(Player player);
             public event PlayerJoinedEventHandler Joined;
             public event PlayerDisconnectedEventHandler Disconnected;
-
-            
-
-            public bool? IsOnlineMode;
 
             private MonitorPlayerConfig Config;
             private List<Player> PlayerList = new List<Player>();
@@ -353,12 +341,6 @@ namespace PlayerMonitor.Modes
                 else if (FoundPlayer == null)
                 {
                     Player NewPlayer = new Player(name, Guid.Parse(uuid.ToString()), DefPlayerBlood);
-                    if (PlayerList.Count == 0)
-                    {
-                        Thread t = new Thread(iom => IsOnlineMode = NewPlayer.IsOnlineMode());
-                        t.Start();
-                    }
-
                     //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
                     NewPlayer.ScreenTag = Screen.CreateLine(
                         "[", $"{PlayerList.Count + 1:D2}", "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{NewPlayer.Blood - 1:D2}", "]",
@@ -381,10 +363,10 @@ namespace PlayerMonitor.Modes
 
                     if (PlayerList[i].Blood == 0)
                     {
-                        Player PlayerTmp = PlayerList[i];
+                        Player DeadPlayer = PlayerList[i];
                         PlayerList.Remove(PlayerList[i--]);
                         //从屏幕上移除这个玩家&修改其它玩家的序号(屏幕上的)
-                        Screen.RemoveLine(PlayerTmp.ScreenTag, true);
+                        Screen.RemoveLine(DeadPlayer.ScreenTag, true);
                         if (PlayerList.Count > 0)
                         {
                             for (int j = 0; j < PlayerList.Count; j++)
@@ -392,7 +374,7 @@ namespace PlayerMonitor.Modes
                                 Screen.ReviseField($"{j+1:D2}", 1, PlayerList[j].ScreenTag);
                             }
                         }
-                        Disconnected?.Invoke(PlayerTmp);
+                        Disconnected?.Invoke(DeadPlayer);
                     }
                     else
                     {
@@ -425,73 +407,31 @@ namespace PlayerMonitor.Modes
                 StringBuilder sb = new StringBuilder();
                 foreach (var player in PlayerList)
                 {
-                    sb.Append($"{player}{Environment.NewLine}");
+                    sb.AppendLine($"{player}");
                     sb.Append("---------------------------------");
                 }
                 return sb.ToString();
             }
             public class Player
             {
-                private bool? HasBuyGame = null;
-                private bool OnlineMode;
                 public Guid Uuid { get; set; }
                 public string Name { get; set; }
                 public int Blood { get; set; }
                 public Guid ScreenTag { get; set; }
 
-                public Player()
-                {
-
-                }
                 public Player(string name, Guid uuid, int blood)
                 {
                     this.Name = name;
                     this.Uuid = uuid;
                     this.Blood = blood;
                 }
-
-
-                /// <summary>
-                /// Need Network
-                /// </summary>
-                public bool? IsOnlineMode()
-                {
-                    // GET https://api.mojang.com/users/profiles/minecraft/<username>
-                    // 通过这个API获取玩家的UUID,然后和Ping返回的UUID匹配如果不一样的话就是离线模式了
-                    if (Uuid != null && !string.IsNullOrWhiteSpace(Name))
-                    {
-                        //缓存
-                        if (HasBuyGame != null && HasBuyGame == true)
-                            return OnlineMode;
-                        else if (HasBuyGame != null && HasBuyGame != true)
-                            return false;
-                        //没有缓存的话就去通过API获取
-                        try
-                        {
-                            WebClient wc = new WebClient();
-                            string html = Encoding.UTF8.GetString(wc.DownloadData(
-                                @"https://api.mojang.com/users/profiles/minecraft/" + Name));
-                            HasBuyGame = !string.IsNullOrWhiteSpace(html);
-                            if (HasBuyGame != true)
-                                return null;
-                            OnlineMode = html.Contains(Uuid.ToString().Replace("-", string.Empty));
-                            return OnlineMode;
-                        }
-                        catch
-                        {
-                            return null;
-                        }
-                    }
-                    else
-                        throw new ArgumentNullException("Uuid or Name");
-                }
                 public override string ToString()
                 {
                     StringBuilder sb = new StringBuilder();
-                    sb.Append($"PlayerName:{Name}{Environment.NewLine}");
-                    sb.Append($"uuid:{Uuid}{Environment.NewLine}");
-                    sb.Append($"Blood:{Blood}{Environment.NewLine}");
-                    sb.Append($"ScreenTag:{ScreenTag}{Environment.NewLine}");
+                    sb.AppendLine($"PlayerName:{Name}");
+                    sb.AppendLine($"uuid:{Uuid}");
+                    sb.AppendLine($"Blood:{Blood}");
+                    sb.AppendLine($"ScreenTag:{ScreenTag}");
                     return sb.ToString();
                 }
             }
