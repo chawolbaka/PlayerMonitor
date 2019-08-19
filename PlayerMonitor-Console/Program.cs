@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using PlayerMonitor.Configs;
 using PlayerMonitor.ConsolePlus;
 using PlayerMonitor.Modes;
@@ -62,6 +63,30 @@ namespace PlayerMonitor
                     Program.Exit(false);
             };
 
+            //Linux下窗口变动后会导致显示的位置不正常,而且我还弄不出刷新键
+            //所以暂时先加个监视窗口变化的线程来解决这个问题
+            if (!Platform.IsWindows)
+            {
+                Thread HeightWatching = new Thread(x =>
+                {
+                    int LastHeight = Console.WindowHeight;
+                    while (true)
+                    {
+                        if (Screen.Count > 0)
+                        {
+                            int CurrentHeight = Console.WindowHeight;
+                            if (CurrentHeight != LastHeight)
+                            {
+                                LastHeight = CurrentHeight;
+                                Screen.Refurbih();
+                            }
+                        }
+                        Thread.Sleep(2800);
+                    }
+                });
+                HeightWatching.Name = nameof(HeightWatching);
+                HeightWatching.Start();
+            }
         }
         private static Mode CrerteModeByConsoleOption(List<string> args)
         {

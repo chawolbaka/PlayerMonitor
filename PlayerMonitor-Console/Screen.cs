@@ -12,6 +12,7 @@ namespace PlayerMonitor
     {
 
         private static Dictionary<Guid, Line> Lines = new Dictionary<Guid, Line>();
+        public static int Count => Lines.Count;
 
         public static int SetDefaultForegroundColor(Color foregroundColor)
         {
