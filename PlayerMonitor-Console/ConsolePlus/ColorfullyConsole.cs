@@ -142,7 +142,37 @@ namespace PlayerMonitor.ConsolePlus
         public static void Write(object vlaue, Color fgColor, Color bgColor) => WriteRGB(vlaue.ToString(), fgColor.R, fgColor.G, fgColor.B, bgColor.R, bgColor.G, bgColor.B, true);
         public static void Write(string value, Color fgColor, Color bgColor, bool resetColor) => WriteRGB(value, fgColor.R, fgColor.G, fgColor.B, bgColor.R, bgColor.G, bgColor.B, resetColor);
         public static void Write(object value, Color fgColor, Color bgColor, bool resetColor) => WriteRGB(value.ToString(), fgColor.R, fgColor.G, fgColor.B, bgColor.R, bgColor.G, bgColor.B, resetColor);
-
+        public static void WriteRainbow(string value)
+        {
+            StringBuilder sb = new StringBuilder();
+            int NextColor = 0;
+            foreach (var c in value)
+            {
+                if (c!=' ')
+                {
+                    NextColor = GetNextColor(NextColor);
+                    sb.Append(DefaultColorCodeMark);
+                    sb.Append(NextColor.ToString("x"));
+                }
+                sb.Append(c);
+            }
+            Write(sb.ToString());
+        }
+        private static int GetNextColor(int lastColor)
+        {
+            switch ((ConsoleColor)lastColor)
+            {
+                case ConsoleColor.Red:        return (int)ConsoleColor.DarkYellow;
+                case ConsoleColor.DarkYellow: return (int)ConsoleColor.Yellow;
+                case ConsoleColor.Yellow:     return (int)ConsoleColor.Green;
+                case ConsoleColor.Green:      return (int)ConsoleColor.Cyan;
+                case ConsoleColor.Cyan:       return (int)ConsoleColor.Blue;
+                case ConsoleColor.Blue:       return (int)ConsoleColor.Magenta;
+                case ConsoleColor.Magenta:    return (int)ConsoleColor.Red;
+                default: return (int)ConsoleColor.Red;
+            }
+        }
+        
         public static void WriteLine(string value, char colorCodeMark)
         {
             //value的结尾会加上"\033[0m"我想把换行写在这句后面,而不是前面(虽然视觉上好像没什么区别
@@ -181,6 +211,7 @@ namespace PlayerMonitor.ConsolePlus
         public static void WriteLine(string value, Color fgColor, Color bgColor) => WriteLine(value, fgColor, bgColor, true);
         public static void WriteLine(object value, Color fgColor, Color bgColor) => WriteLine(value.ToString(), fgColor, bgColor, true);
         public static void WriteLine(object value, Color fgColor, Color bgColor, bool resetColor) => WriteLine(value.ToString(), fgColor, bgColor, resetColor);
+        public static void WriteRainbowLine(string value) => WriteRainbow(value + Environment.NewLine);
 
         public static void ResetColor() => ResetColor(DefaultForegroundColor, DefaultBackgroundColor);
         public static void ResetColor(ConsoleColor defForegroundColor, ConsoleColor defBackgroundColor)
