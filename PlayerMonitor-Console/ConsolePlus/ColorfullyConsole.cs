@@ -26,8 +26,8 @@ namespace PlayerMonitor.ConsolePlus
 
             if (Platform.IsWindows)
             {
-            #if !CORE_RT
-                IsWindows10 = IsWindows10 = Environment.OSVersion.Version.Major >= 10;
+            #if !CORE_RT && !DEBUG
+                IsWindows10 = Environment.OSVersion.Version.Major >= 10;
             #endif
                 if (IsWindows10)
                 {
@@ -143,8 +143,6 @@ namespace PlayerMonitor.ConsolePlus
         public static void Write(string value, Color fgColor, Color bgColor, bool resetColor) => WriteRGB(value, fgColor.R, fgColor.G, fgColor.B, bgColor.R, bgColor.G, bgColor.B, resetColor);
         public static void Write(object value, Color fgColor, Color bgColor, bool resetColor) => WriteRGB(value.ToString(), fgColor.R, fgColor.G, fgColor.B, bgColor.R, bgColor.G, bgColor.B, resetColor);
 
-
-        
         public static void WriteLine(string value, char colorCodeMark)
         {
             //value的结尾会加上"\033[0m"我想把换行写在这句后面,而不是前面(虽然视觉上好像没什么区别
@@ -202,18 +200,9 @@ namespace PlayerMonitor.ConsolePlus
         }
         public static void Clear()
         {
-            if (!UseCompatibilityMode && Platform.IsLinux )
-            {
-                //bug:CoreRT编译的虽然有清屏的效果,但是\x1b[2J会被显示出来
-                Console.Write(ANSI.EscapeCode.CleanScreen);
-                //我写完\x1b[2J后再写同样长度的东西回去是不是就可以解决这个问题?
-                //不过这样子光标在高频率下感觉会来回闪一下
+            Console.Clear();
+            if(!Platform.IsWindows&&!UseCompatibilityMode)
                 Console.SetCursorPosition(0, 0);
-            }
-            else
-            {
-                Console.Clear();
-            }
         }
 
         /// <summary>获取当前平台下可用的样式代码数</summary>
