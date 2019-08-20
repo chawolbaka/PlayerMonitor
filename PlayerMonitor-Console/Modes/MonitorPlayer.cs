@@ -127,9 +127,8 @@ namespace PlayerMonitor.Modes
                     {
                         MainPlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
                     }
-                    MainPlayerManager.LifeTimer();
                 }
-
+                MainPlayerManager.LifeTimer();
                 Thread.Sleep(Config.SleepTime + new Random().Next(0, 256));
             }
             Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}: 主线程已停止");
