@@ -15,9 +15,6 @@ namespace PlayerMonitor
         public static readonly string Name = "PlayerMonitor";
         public static readonly string Version = "bata 0.2";
 
-        //Win10以下的Windows全部使用兼容模式
-        public static bool UseCompatibilityMode = !(Platform.IsWindows&&Environment.OSVersion.Version.Major>= 10);
-
         private static Mode MainMode;
 
         static void Main(string[] args)
@@ -46,8 +43,8 @@ namespace PlayerMonitor
             if (Platform.IsWindows)
                 Console.Title = $"{Program.Name}({Program.Version})";
             
-            //在一些Windows下不知道为什么会乱码/字显示不全这样子的问题,只有在非兼容模式下修改编码
-            if (!UseCompatibilityMode)
+            //Win10以下的Windows不知道为什么会有乱码或者字显示不全这样子的问题
+            if (Platform.IsWindows && Environment.OSVersion.Version.Major >= 10)
             {
                 Console.InputEncoding = Encoding.UTF8;
                 Console.OutputEncoding = Encoding.UTF8;
