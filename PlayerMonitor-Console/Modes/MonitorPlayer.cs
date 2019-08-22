@@ -125,7 +125,10 @@ namespace PlayerMonitor.Modes
                 {
                     foreach (var player in PingResult.Player.Samples)
                     {
-                        MainPlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
+                        if (Config.HighlightList.Contains(player.Name))
+                            MainPlayerManager.Add(Config.HighlightColor+player.Name.Replace('§', '&'), Guid.Parse(player.Id));
+                        else
+                            MainPlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
                     }
                 }
                 MainPlayerManager.LifeTimer();

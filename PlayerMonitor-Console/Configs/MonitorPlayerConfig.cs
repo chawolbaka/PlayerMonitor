@@ -16,6 +16,8 @@ namespace PlayerMonitor.Configs
 
         public int SleepTime { get; set; } = 1600;
         public int Blood { get; set; } = 8;
+        public List<string> HighlightList { get; set; } = new List<string>();
+        public string HighlightColor { get; set; } = "&c";
         public bool AutoSetBlood { get; set; } = false;//未实现
         public string RunCommandForPlayerJoin { get; set; }
         public string RunCommandForPlayerDisconnected { get; set; }
@@ -55,41 +57,31 @@ namespace PlayerMonitor.Configs
                         case "-h":
                         case "-help":
                         case "--help":
-                            (this as IConsoleHelp).Show();
-                            break;
+                            (this as IConsoleHelp).Show(); break;
                         case "-i":
                         case "-ip":
                         case "-host":
-                            this.ServerHost = argumentList[i + 1];
-                            i++;
-                            break;
+                            this.ServerHost = argumentList[++i]; break;
                         case "-p":
                         case "-port":
-                            this.ServerPort = ushort.Parse(argumentList[i + 1]);
-                            i++;
-                            break;
+                            this.ServerPort = ushort.Parse(argumentList[++i]); break;
                         case "-s":
                         case "-sleep":
-                            this.SleepTime = int.Parse(argumentList[i + 1]);
-                            i++;
-                            break;
+                            this.SleepTime = int.Parse(argumentList[++i]); break;
                         case "-b":
                         case "-blood":
-                            this.Blood = int.Parse(argumentList[i + 1]);
-                            i++;
-                            break;
+                            this.Blood = int.Parse(argumentList[++i]); break;
+                        case "--highlight":
+                            this.HighlightList.AddRange(argumentList[++i].Replace('，',',').Split(',')); break;
+                        case "--highlight-color":
+                            this.HighlightColor = GetColorCode(argumentList[++i]); break;
                         case "--color-minecraft":
                             this.SwitchColorScheme(new ConsolePlus.ColorSchemes.MinecraftColorScheme());
                             break;
                         case "--script-logged":
-                            this.RunCommandForPlayerJoin = argumentList.Count >= i + 1 ? argumentList[i + 1] : throw new Exception($"option {argumentList[i]} it value is empty");
-                            i++;
-                            break;
+                            this.RunCommandForPlayerJoin = argumentList.Count >= i + 1 ? argumentList[++i] : throw new Exception($"option {argumentList[i]} it value is empty"); break;
                         case "--script-loggedout":
-                            this.RunCommandForPlayerDisconnected = argumentList.Count >= i + 1 ? argumentList[i + 1] : throw new Exception($"option {argumentList[i]} it value is empty");
-                            i++;
-                            break;
-
+                            this.RunCommandForPlayerDisconnected = argumentList.Count >= i + 1 ? argumentList[++i] : throw new Exception($"option {argumentList[i]} it value is empty");break;
                         default:
                             ColorfullyConsole.WriteLine($"&c错误:\r\n &r未知命令行选项:{argumentList[i]}\r\n");
                             Program.Exit(false);
@@ -134,6 +126,30 @@ namespace PlayerMonitor.Configs
             //if (!string.IsNullOrWhiteSpace(this.ServerHost))
             //    this.ServerPort = Minecraft.DefaultPortOfServer;
             
+        }
+        string GetColorCode(string arg)
+        {
+            if(string.IsNullOrWhiteSpace(arg))
+            {
+                ColorfullyConsole.Write($"&c错误: \r\n &r选项 \"&e--highlight-color&r\" 没有值");
+                Program.Exit(false);
+                return "";
+            }
+            //转成首字母大写后面全部小写
+            char[] ColorText = arg.ToLower().ToCharArray();
+            ColorText[0] = ColorText[0].ToString().ToUpper()[0];
+            if (int.TryParse(arg, out int Color_Hex) && Color_Hex >= 0 && Color_Hex <= 0xf)
+                return '&' + Color_Hex.ToString("x");
+            else if (Color_Hex >= 0 && Color_Hex <= 0xf && Enum.TryParse(new string(ColorText), out ConsoleColor color))
+                return '&' + ((int)color).ToString("x");
+            else
+            {
+                ColorfullyConsole.WriteLine($"&c错误&r: 颜色 \"{arg}\" 不存在,可用的颜色:");
+                foreach (var name in typeof(ConsoleColor).GetEnumNames())
+                    ColorfullyConsole.WriteLine(" " + name, (ConsoleColor)Enum.Parse(typeof(ConsoleColor), name));
+                Program.Exit(false);
+                return "";
+            }
         }
 
         bool IConsoleGuide.OpenGuide()
@@ -206,6 +222,9 @@ namespace PlayerMonitor.Configs
             Console.WriteLine($" -p, -port\t\t\t服务器端口号(范围:1-65535),不指定会使用MC的默认端口号({Minecraft.DefaultPortOfServer})");
             Console.WriteLine($" -s, -sleep\t\t\t每次Ping完服务器后休眠的时间(单位:毫秒,默认:{0}ms)");
             Console.WriteLine($" -b, -blood\t\t\t一个玩家被检测到后的初始血量(默认8)\r\n");//这边的8有问题,如果我改了默认值这边也不会变化,不过我懒的处理这个问题了.
+
+            Console.WriteLine(" --highlight\t\t\t高亮指定的玩家,格式:Player1,player2,player3");
+            Console.WriteLine(" --highlight-color\t\t高亮的颜色,默认红色\r\n");
 
             if (Platform.IsWindows)
             {
