@@ -124,12 +124,7 @@ namespace PlayerMonitor.Modes
                 if (PingResult.Player.Samples != null)
                 {
                     foreach (var player in PingResult.Player.Samples)
-                    {
-                        if (Config.HighlightList.Contains(player.Name))
-                            MainPlayerManager.Add(Config.HighlightColor+player.Name.Replace('§', '&'), Guid.Parse(player.Id));
-                        else
-                            MainPlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
-                    }
+                        MainPlayerManager.Add(player.Name.Replace('§', '&'), Guid.Parse(player.Id));
                 }
                 MainPlayerManager.LifeTimer();
                 Thread.Sleep(Config.SleepTime + new Random().Next(0, 256));
@@ -344,9 +339,14 @@ namespace PlayerMonitor.Modes
                 {
                     Player NewPlayer = new Player(name, Guid.Parse(uuid.ToString()), DefPlayerBlood);
                     //格式:[玩家索引/玩家剩余生命]Name:玩家名(UUID)
-                    NewPlayer.ScreenTag = Screen.CreateLine(
-                        "[", $"{PlayerList.Count + 1:D2}", "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{NewPlayer.Blood - 1:D2}", "]",
-                        "Name:", NewPlayer.Name, "(", $"{NewPlayer.Uuid}", ")");
+                    if(Config.HighlightList.Count>0&&Config.HighlightList.Contains(NewPlayer.Name))
+                        NewPlayer.ScreenTag = Screen.CreateLine(
+                            "[", $"{PlayerList.Count + 1:D2}", "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{NewPlayer.Blood - 1:D2}", "]",
+                            "Name:", Config.HighlightColor + NewPlayer.Name, "(", $"{NewPlayer.Uuid}", ")");
+                    else
+                        NewPlayer.ScreenTag = Screen.CreateLine(
+                            "[", $"{PlayerList.Count + 1:D2}", "/", $"{GetBloodColor(NewPlayer.Blood - 1, Config.Blood)}{NewPlayer.Blood - 1:D2}", "]",
+                            "Name:", NewPlayer.Name, "(", $"{NewPlayer.Uuid}", ")");
                     PlayerList.Add(NewPlayer);
                     Joined?.Invoke(NewPlayer);
                 }
