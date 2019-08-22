@@ -201,16 +201,24 @@ namespace PlayerMonitor.Configs
             Console.WriteLine("Options:");
             //为了在命令行选项里面严格一点,暂时不启用这个功能了.(只在无任何命令行选项的情况启用)
             //Console.WriteLine("-host \t服务器地址:端口号,端口号留空的情况会使用MC默认的25565");
-            Console.WriteLine($" -h, -help\t\t\t\t显示帮助信息");
-            Console.WriteLine($" -i, -ip IP\t\t\t\t服务器IP地址或域名");
-            Console.WriteLine($" -p, -port PORT\t\t\t\t服务器端口号(范围:1-65535),不使用这个命令行选项会使用MC的默认端口号({Minecraft.DefaultPortOfServer})");
-            Console.WriteLine($" -s, -sleep TIME\t\t\t每次Ping完服务器后休眠的时间(单位:毫秒,默认:{this.SleepTime}ms)");
-            Console.WriteLine($" -b, -blood DEFULT_BLOOD\t\t一个玩家被检测到后的初始血量(默认8)\r\n");//这边的8有问题,如果我改了默认值这边也不会变化,不过我懒的处理这个问题了.
-            
-            Console.WriteLine(" --script-logged SCRIPT_DIR\t\t当一个玩家加入服务器后会执行这个程序(如果路径中有空格需要在头尾加双引号)");
-            Console.WriteLine(" --script-loggedout SCRIPT_DIR\t\t当一个玩家离开服务器后会执行这个程序(如果路径中有空格需要在头尾加双引号)\r\n");
-			if(Platform.IsWindows)
-            Console.WriteLine(" --color-minecraft \t\t\t使用MC的RGB值(仅支持Windows)\r\n");
+            Console.WriteLine($" -h, -help\t\t\t显示帮助信息");
+            Console.WriteLine($" -i, -ip\t\t\t服务器IP地址或域名");
+            Console.WriteLine($" -p, -port\t\t\t服务器端口号(范围:1-65535),不指定会使用MC的默认端口号({Minecraft.DefaultPortOfServer})");
+            Console.WriteLine($" -s, -sleep\t\t\t每次Ping完服务器后休眠的时间(单位:毫秒,默认:{0}ms)");
+            Console.WriteLine($" -b, -blood\t\t\t一个玩家被检测到后的初始血量(默认8)\r\n");//这边的8有问题,如果我改了默认值这边也不会变化,不过我懒的处理这个问题了.
+
+            if (Platform.IsWindows)
+            {
+                Console.WriteLine(" --script-logged\t\t当一个玩家加入服务器后会被执行(如果路径中有空格需要在头尾加双引号)");
+                Console.WriteLine(" --script-loggedout\t\t当一个玩家离开服务器后会被执行(如果路径中有空格需要在头尾加双引号)\r\n");
+
+                Console.WriteLine(" --color-minecraft \t\t使用MC的RGB值(仅支持Windows)\r\n");
+            }
+            else
+            {
+                Console.WriteLine(" --script-logged\t\t当一个玩家加入服务器后会被执行");
+                Console.WriteLine(" --script-loggedout\t\t当一个玩家离开服务器后会被执行\r\n");
+            }
             Program.Exit(false);
         }
     }
