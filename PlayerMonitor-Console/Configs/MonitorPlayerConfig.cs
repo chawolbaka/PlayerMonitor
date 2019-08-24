@@ -135,8 +135,8 @@ namespace PlayerMonitor.Configs
                 Program.Exit(false);
                 return "";
             }
-            //转成首字母大写后面全部小写
-            char[] ColorText = arg.ToLower().ToCharArray();
+            //转成首字母大写
+            char[] ColorText = arg.ToCharArray();
             ColorText[0] = ColorText[0].ToString().ToUpper()[0];
             if (int.TryParse(arg, out int Color_Hex) && Color_Hex >= 0 && Color_Hex <= 0xf)
                 return '&' + Color_Hex.ToString("x");
