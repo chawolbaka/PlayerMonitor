@@ -41,7 +41,6 @@ namespace PlayerMonitor.Configs
                 base.LoadByConsoleOptions(argumentList);
         }
 
-
         protected override void LoadByConsoleOptions(List<string> argumentList)
         {
             if (argumentList == null)
@@ -132,24 +131,32 @@ namespace PlayerMonitor.Configs
             if(string.IsNullOrWhiteSpace(arg))
             {
                 ColorfullyConsole.Write($"&c错误: \r\n &r选项 \"&e--highlight-color&r\" 没有值");
-                Program.Exit(false);
-                return "";
+                Program.Exit(false); return "";
             }
-            //转成首字母大写
-            char[] ColorText = arg.ToCharArray();
-            ColorText[0] = ColorText[0].ToString().ToUpper()[0];
-            if (int.TryParse(arg, out int Color_Hex) && Color_Hex >= 0 && Color_Hex <= 0xf)
-                return '&' + Color_Hex.ToString("x");
-            else if (Color_Hex >= 0 && Color_Hex <= 0xf && Enum.TryParse(new string(ColorText), out ConsoleColor color))
-                return '&' + ((int)color).ToString("x");
-            else
+
+            try
             {
-                ColorfullyConsole.WriteLine($"&c错误&r: 颜色 \"{arg}\" 不存在,可用的颜色:");
-                foreach (var name in typeof(ConsoleColor).GetEnumNames())
-                    ColorfullyConsole.WriteLine(" " + name, (ConsoleColor)Enum.Parse(typeof(ConsoleColor), name));
-                Program.Exit(false);
-                return "";
+                int ColorCode = Convert.ToInt32(arg, 16);
+                if (ColorCode >= 0 && ColorCode <= 0xf)
+                    return ColorfullyConsole.DefaultColorCodeMark + ColorCode.ToString("x");
             }
+            catch (FormatException)
+            {
+                string ColorText = arg.ToLower();
+                foreach (var name in typeof(ConsoleColor).GetEnumNames())
+                {
+                    if (name.ToLower()==ColorText&&Enum.TryParse(name, out ConsoleColor color))
+                        return ColorfullyConsole.DefaultColorCodeMark + ((int)color).ToString("x");
+                }
+            }
+
+            ColorfullyConsole.WriteLine($"&c错误&r: 颜色 \"{arg}\" 不存在,可用的颜色:");
+            foreach (var name in typeof(ConsoleColor).GetEnumNames())
+            {
+                ConsoleColor CurrentColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), name);
+                ColorfullyConsole.WriteLine($"0x{((int)CurrentColor).ToString("x")}: {name}", CurrentColor);
+            }
+            Program.Exit(false); return "";
         }
 
         bool IConsoleGuide.OpenGuide()
