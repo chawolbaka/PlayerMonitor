@@ -22,18 +22,16 @@ namespace PlayerMonitor.Configs
         public string RunCommandForPlayerJoin { get; set; }
         public string RunCommandForPlayerDisconnected { get; set; }
 
-        public MonitorPlayerConfig(string serverHost,ushort serverPort)
-        {
-
-        }
         public MonitorPlayerConfig(List<string> argumentList)
         {
             if (argumentList.Any())
             {
                 LoadByConsoleOptions(argumentList);
-                if (string.IsNullOrWhiteSpace(this.ServerHost) || ServerPort == default(ushort))
+                if (this.ServerPort == default(ushort))
+                    this.ServerPort = Minecraft.DefaultPortOfServer;
+                if (string.IsNullOrWhiteSpace(this.ServerHost))
                 {
-                    Console.WriteLine("缺少有效的服务器地址或端口号.");
+                    Console.WriteLine("缺少有效的服务器地址.");
                     (this as IConsoleGuide).OpenGuide();
                 }
             }
@@ -161,13 +159,11 @@ namespace PlayerMonitor.Configs
 
         bool IConsoleGuide.OpenGuide()
         {
-            string InputPrompt_Host = $"服务器地址:";
-            string InputPrompt_Port = $"服务器端口号(1-{ushort.MaxValue}):";
+            string InputPrompt_Host = "服务器地址:";
 
             while (string.IsNullOrWhiteSpace(this.ServerHost))
             {
-                Console.Write(InputPrompt_Host);
-                Console.ForegroundColor = ConsoleColor.White;
+                ColorfullyConsole.Write(InputPrompt_Host, ConsoleColor.White);
                 string UserInput = Console.ReadLine();
                 //我的解析写的有问题,可能有一些地址是可以用的但是我这边就是匹配不了,所以这边暂时加了一个强制使用符.
                 if (UserInput.Length>0&&UserInput[UserInput.Length-1] == '!')
@@ -177,7 +173,7 @@ namespace PlayerMonitor.Configs
                 else
                 {
                     var BaseInfo = Minecraft.ServerAddressResolve(UserInput);
-                    if (BaseInfo != null)
+                    if (BaseInfo.HasValue)
                     {
                         this.ServerHost = BaseInfo.Value.Host;
                         this.ServerPort = BaseInfo.Value.Port;
@@ -187,20 +183,6 @@ namespace PlayerMonitor.Configs
                         InputPrompt_Host = "你输入的不是一个有效的服务器地址,请重新输入:";
                     }
                 }
-                Console.ResetColor();
-            } 
-            
-            //如果使用了"!"就需要用户补充一下端口号,或者用户使用的是命令行选项来开启程序,但是没使用 "-port" 选项
-            while (this.ServerPort==default(ushort))
-            {
-                Console.Write(InputPrompt_Port);
-                Console.ForegroundColor = ConsoleColor.White;
-                string UserInput = Console.ReadLine();
-                if (ushort.TryParse(UserInput, out ushort port))
-                    this.ServerPort = port;
-                else if(InputPrompt_Port[0]!='你')
-                    InputPrompt_Port = "你输入的不是一个有效的端口号,请重新输入:";
-                Console.ResetColor();
             }
             return true;
         }
