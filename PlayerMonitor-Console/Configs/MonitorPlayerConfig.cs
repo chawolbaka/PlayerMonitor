@@ -6,9 +6,8 @@ using PlayerMonitor.ConsolePlus;
 
 namespace PlayerMonitor.Configs
 {
-    public class MonitorPlayerConfig : ConsoleProgramConfig, IConsoleGuide,IConsoleHelp 
-
-    {
+    public class MonitorPlayerConfig : ConsoleProgramConfig, IConsoleGuide,IConsoleHelp
+    { 
         public override string WindowTitleStyle { get; protected set; } = "$IP:$PORT($PING_TIMEms)";
 
         public string ServerHost { get; set; }
@@ -160,10 +159,14 @@ namespace PlayerMonitor.Configs
         bool IConsoleGuide.OpenGuide()
         {
             string InputPrompt_Host = "服务器地址:";
+            Random egg = new Random();
 
             while (string.IsNullOrWhiteSpace(this.ServerHost))
             {
-                ColorfullyConsole.Write(InputPrompt_Host, ConsoleColor.White);
+                if (egg.Next(0, 233) == 23)
+                    ColorfullyConsole.WriteRainbow(InputPrompt_Host);
+                else
+                    ColorfullyConsole.Write(InputPrompt_Host, ConsoleColor.White);
                 string UserInput = Console.ReadLine();
                 //我的解析写的有问题,可能有一些地址是可以用的但是我这边就是匹配不了,所以这边暂时加了一个强制使用符.
                 if (UserInput.Length>0&&UserInput[UserInput.Length-1] == '!')

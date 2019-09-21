@@ -9,9 +9,14 @@ namespace PlayerMonitor.ConsolePlus
     {
         private static IntPtr OutputHandle;
         private static bool IsWindows10;
+        private static bool CanUseANSI => !UseCompatibilityMode && (IsWindows10 || Platform.IsLinux);
+        private static bool Initialized;
         //这两行就是为什么要在程序开启的时候需要执行一下Init的原因,如果在执行Init前设置了Console中的这两项属性会导致ResetColor无法还原默认色
         private static ConsoleColor DefaultForegroundColor = Console.ForegroundColor;
         private static ConsoleColor DefaultBackgroundColor = Console.BackgroundColor;
+
+        private static Dictionary<char, int> ColorCodes = new Dictionary<char, int>();
+        private static Dictionary<char, int> FormatCodes = new Dictionary<char, int>();
 
         public static bool UseCompatibilityMode { get; set; }
         public const char DefaultColorCodeMark = '&';
@@ -23,24 +28,70 @@ namespace PlayerMonitor.ConsolePlus
 #if COMPATIBILITY_MODE
             UseCompatibilityMode = true;
 #else
-
+            if (Initialized)
+                return;
+            Initialized = true;
             if (Platform.IsWindows)
             {
-            #if !CORE_RT && !DEBUG
                 IsWindows10 = Environment.OSVersion.Version.Major >= 10;
-            #endif
+                OutputHandle = WinAPI.GetStdHandle(WinAPI.STD_OUTPUT_HANDLE);
                 if (IsWindows10)
                 {
                     WinAPI.GetConsoleMode(OutputHandle, out uint consoleMode);
                     WinAPI.SetConsoleMode(OutputHandle, consoleMode | (uint)WinAPI.ConsoleModes.ENABLE_VIRTUAL_TERMINAL_PROCESSING);
                 }
-                else
-                {
-                    OutputHandle = WinAPI.GetStdHandle(WinAPI.STD_OUTPUT_HANDLE);
-                }
+                FormatCodes.Add('n', IsWindows10 ? 4 : WinAPI.ConsoleColorAttributes.COMMON_LVB_UNDERSCORE); //underline
+            }
+            else
+            {
+                FormatCodes.Add('l', 1); //bold
+                FormatCodes.Add('o', 3); //italic
+                FormatCodes.Add('n', 4); //underline
+                FormatCodes.Add('s', 5); //blinking (slow)
+                FormatCodes.Add('t', 6); //blinking (fast)
+                FormatCodes.Add('m', 9); //cross-out
             }
 #endif
+            RegisterColorCode(CanUseANSI);
+            FormatCodes.Add('r', 0); //reset
         }
+        private static void RegisterColorCode(bool isANSI)
+        {
+            if (ColorCodes == null)
+                ColorCodes = new Dictionary<char, int>();
+            else if (ColorCodes.Count > 0)
+                ColorCodes.Clear();
+
+            if (isANSI)
+            {
+                //8Color
+                ColorCodes.Add('0', 30); //Black
+                ColorCodes.Add('1', 34); //DarkBlue
+                ColorCodes.Add('2', 32); //DarkGreen
+                ColorCodes.Add('3', 36); //DarkCyan
+                ColorCodes.Add('4', 31); //DarkRed
+                ColorCodes.Add('5', 35); //DarkMagenta
+                ColorCodes.Add('6', 33); //DarkYellow
+                ColorCodes.Add('8', 37); //DarkGray
+                //16Color
+                ColorCodes.Add('7', 90); //Gray
+                ColorCodes.Add('9', 94); //Blue
+                ColorCodes.Add('a', 92); //Green
+                ColorCodes.Add('b', 96); //Cyan
+                ColorCodes.Add('c', 91); //Red
+                ColorCodes.Add('d', 95); //Magenta
+                ColorCodes.Add('e', 93); //Yellow
+                ColorCodes.Add('f', 97); //White
+            }
+            else
+            {
+                for (ushort i = 0; i < 16; i++)
+                {
+                    ColorCodes.Add(i.ToString("x")[0], i);
+                }
+            }
+        }
+
 
         //样式代码
         public static void Write(string value, char colorCodeMark)
@@ -57,12 +108,10 @@ namespace PlayerMonitor.ConsolePlus
             //兼容模式也有可能是通过命令行选项开启的,所以需要保留这个else if
             else if (UseCompatibilityMode)
                 WriteColorCode(value, colorCodeMark);
-            else if (IsWindows10)
-                WriteColorCodeInWindows10(value, colorCodeMark);
+            else if (CanUseANSI)
+                WriteColorCodeInLinux(value, colorCodeMark);
             else if (Platform.IsWindows)
                 WriteColorCodeInWindows(value, colorCodeMark);
-            else if (Platform.IsLinux)
-                WriteColorCodeInLinux(value, colorCodeMark);
             else
                 WriteColorCode(value, colorCodeMark);//其它系统交给.net core去兼容.
 #endif
@@ -142,6 +191,7 @@ namespace PlayerMonitor.ConsolePlus
         public static void Write(object vlaue, Color fgColor, Color bgColor) => WriteRGB(vlaue.ToString(), fgColor.R, fgColor.G, fgColor.B, bgColor.R, bgColor.G, bgColor.B, true);
         public static void Write(string value, Color fgColor, Color bgColor, bool resetColor) => WriteRGB(value, fgColor.R, fgColor.G, fgColor.B, bgColor.R, bgColor.G, bgColor.B, resetColor);
         public static void Write(object value, Color fgColor, Color bgColor, bool resetColor) => WriteRGB(value.ToString(), fgColor.R, fgColor.G, fgColor.B, bgColor.R, bgColor.G, bgColor.B, resetColor);
+        //彩虹色
         public static void WriteRainbow(string value)
         {
             StringBuilder sb = new StringBuilder();
@@ -198,7 +248,7 @@ namespace PlayerMonitor.ConsolePlus
         //一堆为了让我写舒服点的重载(看着眼瞎)
         public static void WriteLine(string value) => WriteLine(value, DefaultColorCodeMark);
         public static void WriteLine(object value) => WriteLine(value.ToString(),DefaultColorCodeMark);
-        public static void WriteLine(object value, char colorCodeMark) => WriteLine(value.ToString(), colorCodeMark);        
+        public static void WriteLine(object value, char colorCodeMark) => WriteLine(value.ToString(), colorCodeMark);
         public static void WriteLine(string value, ConsoleColor fgColor) => WriteLine(value, fgColor, true);
         public static void WriteLine(object value, ConsoleColor fgColor) => WriteLine(value.ToString(), fgColor, true);
         public static void WriteLine(object value, ConsoleColor fgColor, bool resetColor) => WriteLine(value.ToString(), fgColor, resetColor);
@@ -221,7 +271,7 @@ namespace PlayerMonitor.ConsolePlus
 #else
             if (UseCompatibilityMode)
                 Console.ResetColor();
-            else if (Platform.IsLinux || IsWindows10)
+            else if (CanUseANSI)
                 Console.Write(ANSI.EscapeCode.ColorOff);
             else if (Platform.IsWindows) //如果设置了下划线之类的属性会导致Console.ResetColor()只能去除下划线无法恢复默认颜色
                 WinAPI.SetConsoleTextAttribute(OutputHandle, (ushort)((ushort)defForegroundColor | (ushort)defBackgroundColor << 4));
@@ -236,8 +286,11 @@ namespace PlayerMonitor.ConsolePlus
                 Console.SetCursorPosition(0, 0);
         }
 
+
         /// <summary>获取当前平台下可用的样式代码数</summary>
-        public static (int ColorCodeCount,int FormatCodeCount) GetCodeCount(string value,char colorCodeMark)
+        public static (int ColorCodeCount, int FormatCodeCount) GetCodeCount(string value) => GetCodeCount(value, DefaultColorCodeMark);
+        /// <summary>获取当前平台下可用的样式代码数</summary>
+        public static (int ColorCodeCount, int FormatCodeCount) GetCodeCount(string value, char colorCodeMark)
         {
             int ColorCodeCount = 0;
             int FormatCodeCount = 0;
@@ -245,89 +298,16 @@ namespace PlayerMonitor.ConsolePlus
             {
                 if (value[i]==colorCodeMark&& i!=value.Length-1)
                 {
-                    if (!UseCompatibilityMode&&Platform.IsWindows)
-                    {
-                        switch (value[i + 1])
-                        {
-                            case '0': ColorCodeCount++; i++; break;
-                            case '1': ColorCodeCount++; i++; break;
-                            case '2': ColorCodeCount++; i++; break;
-                            case '3': ColorCodeCount++; i++; break;
-                            case '4': ColorCodeCount++; i++; break;
-                            case '5': ColorCodeCount++; i++; break;
-                            case '6': ColorCodeCount++; i++; break;
-                            case '7': ColorCodeCount++; i++; break;
-                            case '8': ColorCodeCount++; i++; break;
-                            case '9': ColorCodeCount++; i++; break;
-                            case 'a': ColorCodeCount++; i++; break;
-                            case 'b': ColorCodeCount++; i++; break;
-                            case 'c': ColorCodeCount++; i++; break;
-                            case 'd': ColorCodeCount++; i++; break;
-                            case 'e': ColorCodeCount++; i++; break;
-                            case 'f': ColorCodeCount++; i++; break;
-                            case 'n': FormatCodeCount++; i++; break;
-                            case 'r': FormatCodeCount++; i++; break;
-                        }
-                    }
-                    else if(!UseCompatibilityMode&&Platform.IsLinux)
-                    {
-                        switch (value[i + 1])
-                        {
-                            case '0': ColorCodeCount++; i++; break;
-                            case '1': ColorCodeCount++; i++; break;
-                            case '2': ColorCodeCount++; i++; break;
-                            case '3': ColorCodeCount++; i++; break;
-                            case '4': ColorCodeCount++; i++; break;
-                            case '5': ColorCodeCount++; i++; break;
-                            case '6': ColorCodeCount++; i++; break;
-                            case '7': ColorCodeCount++; i++; break;
-                            case '8': ColorCodeCount++; i++; break;
-                            case '9': ColorCodeCount++; i++; break;
-                            case 'a': ColorCodeCount++; i++; break;
-                            case 'b': ColorCodeCount++; i++; break;
-                            case 'c': ColorCodeCount++; i++; break;
-                            case 'd': ColorCodeCount++; i++; break;
-                            case 'e': ColorCodeCount++; i++; break;
-                            case 'f': ColorCodeCount++; i++; break;
-                            case 'l': FormatCodeCount++; i++; break;
-                            case 'o': FormatCodeCount++; i++; break;
-                            case 'n': FormatCodeCount++; i++; break;
-                            case 'm': FormatCodeCount++; i++; break;
-                            case 's': FormatCodeCount++; i++; break;
-                            case 't': FormatCodeCount++; i++; break;
-                            case 'r': FormatCodeCount++; i++; break;
-                        }
-                    }
+                    if (ColorCodes.ContainsKey(value[++i]))
+                        ColorCodeCount++;
+                    else if (FormatCodes.ContainsKey(value[i]))
+                        FormatCodeCount++;
                     else
-                    {
-                        switch (value[i + 1])
-                        {
-                            case '0': ColorCodeCount++; i++; break;
-                            case '1': ColorCodeCount++; i++; break;
-                            case '2': ColorCodeCount++; i++; break;
-                            case '3': ColorCodeCount++; i++; break;
-                            case '4': ColorCodeCount++; i++; break;
-                            case '5': ColorCodeCount++; i++; break;
-                            case '6': ColorCodeCount++; i++; break;
-                            case '7': ColorCodeCount++; i++; break;
-                            case '8': ColorCodeCount++; i++; break;
-                            case '9': ColorCodeCount++; i++; break;
-                            case 'a': ColorCodeCount++; i++; break;
-                            case 'b': ColorCodeCount++; i++; break;
-                            case 'c': ColorCodeCount++; i++; break;
-                            case 'd': ColorCodeCount++; i++; break;
-                            case 'e': ColorCodeCount++; i++; break;
-                            case 'f': ColorCodeCount++; i++; break;
-                            case 'r': FormatCodeCount++; i++; break;
-                        }
-                    }
+                        i--;
                 }
             }
             return (ColorCodeCount, FormatCodeCount);
         }
-
-        /// <summary>获取当前平台下可用的样式代码数</summary>
-        public static (int ColorCodeCount, int FormatCodeCount) GetCodeCount(string value) => GetCodeCount(value, DefaultColorCodeMark);
 
         /// <summary>查询样式代码在当前平台下是否被支持</summary>
         /// <param name="formatCode">带标识符的样式代码</param>
@@ -345,30 +325,8 @@ namespace PlayerMonitor.ConsolePlus
 
         /// <summary>查询样式代码在当前平台下是否被支持</summary>
         /// <param name="formatCode">无标识符的样式代码</param>
-        public static bool IsFormatCodeSupport(char formatCode)
-        {
-            if (formatCode == 'r')
-                return true;
-            else if (UseCompatibilityMode)
-                return false;
-            else if (Platform.IsWindows)
-            {
-                return formatCode == 'n';
-            }
-            else if (Platform.IsLinux)
-            {
-                switch (formatCode)
-                {
-                    case 'l': return true;
-                    case 'o': return true;
-                    case 'n': return true;
-                    case 'm': return true;
-                    case 's': return true;
-                    case 't': return true;
-                }
-            }
-            return false;
-        }
+        public static bool IsFormatCodeSupport(char formatCode) => FormatCodes.ContainsKey(formatCode);
+
 
         //使用SetConsoleTextAttribute实现
         private static void WriteColorCodeInWindows(string s, char mark)
@@ -437,130 +395,50 @@ namespace PlayerMonitor.ConsolePlus
                 if (s[i]==mark&&i!=s.Length-1)
                 {
                     //如果mark后是有效的颜色代码就会在设置好后直接跳出循环,如果不是就写入OutputText
-                    switch (s[i+1])
+                    if (FormatCodes.ContainsKey(s[++i]))
                     {
-                        //8Color
-                        case '0': TextColor = 30; i++; continue; //Black
-                        case '1': TextColor = 34; i++; continue; //DarkBlue
-                        case '2': TextColor = 32; i++; continue; //DarkGreen
-                        case '3': TextColor = 36; i++; continue; //DarkCyan
-                        case '4': TextColor = 31; i++; continue; //DarkRed
-                        case '5': TextColor = 35; i++; continue; //DarkMagenta
-                        case '6': TextColor = 33; i++; continue; //DarkYellow
-                        case '8': TextColor = 37; i++; continue; //DarkGray
-                        //16Color
-                        case '7': TextColor = 90; i++; continue; //Gray
-                        case '9': TextColor = 94; i++; continue; //Blue
-                        case 'a': TextColor = 92; i++; continue; //Green
-                        case 'b': TextColor = 96; i++; continue; //Cyan
-                        case 'c': TextColor = 91; i++; continue; //Red
-                        case 'd': TextColor = 95; i++; continue; //Magenta
-                        case 'e': TextColor = 93; i++; continue; //Yellow
-                        case 'f': TextColor = 97; i++; continue; //White
-                        //FormatCode
-                        case 'l': TextModes.Add(1); i++; continue; //bold
-                        case 'o': TextModes.Add(3); i++; continue; //italic
-                        case 'n': TextModes.Add(4); i++; continue; //underline
-                        case 's': TextModes.Add(5); i++; continue; //blinking (slow)
-                        case 't': TextModes.Add(6); i++; continue; //blinking (fast)
-                        case 'm': TextModes.Add(9); i++; continue; //cross-out
-                        case 'r': TextColor = 0; TextModes.Clear(); i++; continue; //0=reset
-                    }                    
-                }
-                
-
-                //如果有不止一个样式代码的情况就需要在开头把它们叠一下
-                if (TextModes.Count > 1)
-                {
-                    foreach (int mode in TextModes)
-                    {
-                        OutputText.Append($"\x1b[{mode}m");
+                        int code = FormatCodes[s[i]];
+                        if (code == 0)
+                        {
+                            TextColor = -1; TextModes.Clear();
+                            OutputText.Append(ANSI.EscapeCode.ColorOff);
+                        }
+                        else
+                            TextModes.Add(code);
+                        continue;
                     }
-                }
-                //有颜色代码并且样式代码只有一种
-                if (TextColor >= 0 && TextModes.Count == 1)
-                {
-                    OutputText.Append($"\x1b[{TextModes[0]};{TextColor}m");
-                }
-                //只有样式代码
-                else if (TextColor < 0 && TextModes.Count == 1)
-                {
-                    OutputText.Append($"\x1b[{TextModes[0]}m");
-                }
-                //只有颜色代码
-                //样式代码不止一种并且有颜色代码
-                else if (TextColor >= 0)
-                {
-                    OutputText.Append($"\x1b[{TextColor}m");
-                }
-
-                OutputText.Append(s[i]);
-
-                //恢复默认状态
-                TextColor = -1;
-                TextModes.Clear();
-            }
-
-            if (OutputText.Length > 0)
-                OutputText.Append(ANSI.EscapeCode.ColorOff);//重置颜色和样式
-            Console.Write(OutputText);
-        }
-        //使用ANSI实现
-        private static void WriteColorCodeInWindows10(string s, char mark)
-        {
-            //Windows10不知道哪个版本开始好像是支持ANSI了
-            //这种直接拼接好一次性写到终端在视觉上比先设置颜色在写入这样子的循环感觉稍微好一点
-            StringBuilder OutputText = new StringBuilder();
-            int TextColor = -1;
-            int TextMode = 0;
-
-            for (int i = 0; i < s.Length; i++)
-            {
-                if (s[i] == mark && i != s.Length - 1)
-                {
-                    //如果mark后是有效的颜色代码就会在设置好后直接跳出循环,如果不是就写入OutputText
-                    switch (s[i + 1])
+                    else if (ColorCodes.ContainsKey(s[i]))
                     {
-                        //8Color
-                        case '0': TextColor = 30; i++; continue; //Black
-                        case '1': TextColor = 34; i++; continue; //DarkBlue
-                        case '2': TextColor = 32; i++; continue; //DarkGreen
-                        case '3': TextColor = 36; i++; continue; //DarkCyanh
-                        case '4': TextColor = 31; i++; continue; //DarkRed
-                        case '5': TextColor = 35; i++; continue; //DarkMagenta
-                        case '6': TextColor = 33; i++; continue; //DarkYellow
-                        case '8': TextColor = 37; i++; continue; //DarkGray
-                        //16Color
-                        case '7': TextColor = 90; i++; continue; //Gray
-                        case '9': TextColor = 94; i++; continue; //Blue
-                        case 'a': TextColor = 92; i++; continue; //Green
-                        case 'b': TextColor = 96; i++; continue; //Cyan
-                        case 'c': TextColor = 91; i++; continue; //Red
-                        case 'd': TextColor = 95; i++; continue; //Magenta
-                        case 'e': TextColor = 93; i++; continue; //Yellow
-                        case 'f': TextColor = 97; i++; continue; //White
-                        //FormatCode
-                        case 'n': TextMode = 4; i++; continue; //underline
-                        case 'r': TextColor = -1; TextMode = 0; OutputText.Append(ANSI.EscapeCode.ColorOff); i++; continue; //0=reset
+                        TextColor = ColorCodes[s[i]];
+                        continue;
                     }
+                    else
+                        i--;
                 }
 
-                if (TextColor>0&&TextMode>0)
+                //清空样式(如果有的话)
+                if(TextColor!=-1||TextModes.Count>0)
                 {
-                    OutputText.Append($"\x1b[{TextMode};{TextColor}m");
+                    //如果有不止一个样式的情况就需要在开头把它们叠一下
+                    if (TextModes.Count > 1)
+                    {
+                        foreach (int mode in TextModes)
+                        {
+                            OutputText.Append($"\x1b[{mode}m");
+                        }
+                    }
+                    if (TextColor >= 0 && TextModes.Count == 1) //有颜色代码并且样式代码只有一种
+                        OutputText.Append($"\x1b[{TextModes[0]};{TextColor}m");
+                    else if (TextColor < 0 && TextModes.Count == 1) //只有样式代码
+                        OutputText.Append($"\x1b[{TextModes[0]}m");
+                    else if (TextColor >= 0) //只有颜色代码||样式代码不止一种并且有颜色代码
+                        OutputText.Append($"\x1b[{TextColor}m");
+
+                    //恢复没有样式的状态
                     TextColor = -1;
-                    TextMode = 0;
+                    TextModes.Clear();
                 }
-                else if(TextColor>0&&TextMode<=0)
-                {
-                    OutputText.Append($"\x1b[{TextColor}m");
-                    TextColor = -1;
-                }
-                else if(TextColor<0&&TextMode>0)
-                {
-                    OutputText.Append($"\x1b[{TextMode}m");
-                    TextMode = 0;
-                }
+
                 OutputText.Append(s[i]);
             }
 
@@ -574,32 +452,23 @@ namespace PlayerMonitor.ConsolePlus
             StringBuilder Output = new StringBuilder();
             for (int i = 0; i < s.Length; i++)
             {
-                if(s[i]==mark&&i!=s.Length-1)
+                if (s[i] == mark && i != s.Length - 1)
                 {
-                    Console.Write(Output);
-                    Output.Clear();
-                    switch (s[i+1])
+                    if(Output.Length>0)
                     {
-                        case '0': Console.ForegroundColor = ConsoleColor.Black; i++; continue;
-                        case '1': Console.ForegroundColor = ConsoleColor.DarkBlue; i++; continue;
-                        case '2': Console.ForegroundColor = ConsoleColor.DarkGreen; i++; continue;
-                        case '3': Console.ForegroundColor = ConsoleColor.DarkCyan; i++; continue;
-                        case '4': Console.ForegroundColor = ConsoleColor.DarkRed; i++; continue;
-                        case '5': Console.ForegroundColor = ConsoleColor.DarkMagenta; i++; continue;
-                        case '6': Console.ForegroundColor = ConsoleColor.DarkYellow; i++; continue;
-                        case '7': Console.ForegroundColor = ConsoleColor.Gray; i++; continue;
-                        case '8': Console.ForegroundColor = ConsoleColor.DarkGray; i++; continue;
-                        case '9': Console.ForegroundColor = ConsoleColor.Blue; i++; continue;
-                        case 'a': Console.ForegroundColor = ConsoleColor.Green; i++; continue;
-                        case 'b': Console.ForegroundColor = ConsoleColor.Cyan; i++; continue;
-                        case 'c': Console.ForegroundColor = ConsoleColor.Red; i++; continue;
-                        case 'd': Console.ForegroundColor = ConsoleColor.Magenta; i++; continue;
-                        case 'e': Console.ForegroundColor = ConsoleColor.Yellow; i++; continue;
-                        case 'f': Console.ForegroundColor = ConsoleColor.White; i++; continue;
-                        case 'r': Console.ResetColor(); i++; continue;
+                        Console.Write(Output);
+                        Output.Clear();
                     }
+                    char code = s[++i];
+                    if (ColorCodes.ContainsKey(code))
+                        Console.ForegroundColor = (ConsoleColor)ColorCodes[code];
+                    else if (code == 'r')
+                        Console.ResetColor();
+                    else
+                        Output.Append(mark+code);
                 }
-                Output.Append(s[i]);
+                else
+                    Output.Append(s[i]);
             }
             if (Output.Length > 0)
                 Console.Write(Output);
@@ -608,7 +477,7 @@ namespace PlayerMonitor.ConsolePlus
 
         private static void WriteRGB(string s, byte fgRed, byte fgGreen, byte fgBlue, byte bgRed, byte bgGreen, byte bgBlue, bool resetColor)
         {
-            if (!UseCompatibilityMode&&(Platform.IsLinux||IsWindows10))
+            if (CanUseANSI)
             {
                 Console.Write(ANSI.GetForegroundColorCode(fgRed, fgGreen, fgBlue));
                 Console.Write(ANSI.GetBackgroundColorCode(bgRed, bgGreen, bgBlue));
@@ -628,7 +497,7 @@ namespace PlayerMonitor.ConsolePlus
         }
         private static void WriteRGBInForeground(string s, byte r, byte g, byte b, bool resetColor)
         {
-            if (!UseCompatibilityMode&&(Platform.IsLinux||IsWindows10))
+            if (CanUseANSI)
             {
                 if (!resetColor)
                     Console.Write(ANSI.GetForegroundColorCode(r, g, b) + s);
@@ -645,7 +514,7 @@ namespace PlayerMonitor.ConsolePlus
         }
         private static void WriteRGBInBackground(string s, byte r, byte g, byte b, bool resetColor)
         {
-            if (!UseCompatibilityMode&&(Platform.IsLinux||IsWindows10))
+            if (CanUseANSI)
             {
                 if (!resetColor)
                     Console.Write(ANSI.GetBackgroundColorCode(r, g, b) + s);
