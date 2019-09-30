@@ -13,7 +13,7 @@ namespace PlayerMonitor
     class Program
     {
         public static readonly string Name = "PlayerMonitor";
-        public static readonly string Version = "bata 0.2";
+        public static readonly string Version = "bata 0.3";
 
         private static Mode MainMode;
 
@@ -23,7 +23,7 @@ namespace PlayerMonitor
             ConsoleInitializing();
             MainMode = CrerteModeByConsoleOption(args.ToList());//创建主模式的实例
             MainMode.StartAsync();
-            
+
             //Olny Windows Support this
             while (Platform.IsWindows)
             {
@@ -123,6 +123,7 @@ namespace PlayerMonitor
         public static void Exit(string info) => Exit(info, Platform.IsWindows, 0);
         public static void Exit(bool hasPause) => Exit(string.Empty, hasPause, 0);
         public static void Exit(int exitCode) => Exit(string.Empty, Platform.IsWindows, exitCode);
+        public static void Exit(bool hasPause, int exitCode) => Exit(string.Empty, hasPause, exitCode);
         public static void Exit(string info, int exitCode) => Exit(info, Platform.IsWindows, exitCode);
     }
 }
