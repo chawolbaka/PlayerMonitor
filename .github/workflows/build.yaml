@@ -1,0 +1,33 @@
+name: build
+
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '2.1.802'
+    - name: Build
+      run: |
+        dotnet build
+        dotnet build --configuration Release
+    - name: Build Windows
+      run: |
+        dotnet publish --configuration Release --runtime win-x64
+        dotnet publish --configuration Release --runtime win-x86
+        dotnet publish --configuration Release --runtime win10-arm
+        dotnet publish --configuration Release --runtime win10-arm
+    - name: Build Linux
+      run: |
+        dotnet publish --configuration Release --runtime linux-x64
+        dotnet publish --configuration Release --runtime linux-arm
+    - name: Build MacOS
+      run: dotnet publish --configuration Release --runtime osx-x64

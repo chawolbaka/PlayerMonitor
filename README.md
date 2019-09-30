@@ -1,4 +1,6 @@
 # PlayerMonitor (For Minecraft)
+![](https://github.com/chawolbaka/PlayerMonitor/workflows/build/badge.svg)  
+
 玩家监视器,用来监视服务器内玩家的  
 这个项目一开始的目的是快速查服务器里面某人在不在,因为是mod服开一次的时间非常久。  
 不过现在已经没什么用的,所以这个项目被我拿来学习C#了(因此代码会经常有大变动,本版中断也是日常)  
