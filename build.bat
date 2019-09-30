@@ -11,22 +11,28 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 @ECHO OFF
 CLS
 Echo. How to build this program?
-Echo     1.Warp
-Echo     2 AOT(CoreRT)
-Echo     3 SCD(Win64)
-Echo     4 SCD(Win32)
-Echo     5 FDD
+Echo     1 Warp
+Echo     2 Warp(Linker)
+Echo     3 AOT(CoreRT)
+Echo     4 SCD(Win64)
+Echo     5 SCD(Win32)
+Echo     6 FDD
 :RECHOICE
 Set /P Choice=		Your Choose: 
 If not "%Choice%"=="" (
-  If "%Choice%"=="3" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x64 /p:TrimUnusedDependencies=true
-  If "%Choice%"=="4" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x86 /p:TrimUnusedDependencies=true
-  If "%Choice%"=="5" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release
+  If "%Choice%"=="4" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x64 /p:TrimUnusedDependencies=true
+  If "%Choice%"=="5" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x86 /p:TrimUnusedDependencies=true
+  If "%Choice%"=="6" dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release
   If "%Choice%"=="1" (
   dotnet tool install --global dotnet-warp
   dotnet-warp PlayerMonitor-Console\PlayerMonitor.csproj -p:WARP=TRUE
 )
   If "%Choice%"=="2" (
+  CD PlayerMonitor-Console
+  dotnet tool install --global dotnet-warp
+  dotnet-warp -p:WARP=TRUE -l aggressive --verbose
+)
+  If "%Choice%"=="3" (
   dotnet add PlayerMonitor-Console\PlayerMonitor.csproj package Microsoft.DotNet.ILCompiler -v 1.0.0-alpha-*
   dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x64 /p:CORE_RT=TRUE
   dotnet remove PlayerMonitor-Console\PlayerMonitor.csproj package Microsoft.DotNet.ILCompiler
