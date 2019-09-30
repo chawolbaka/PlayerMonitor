@@ -19,7 +19,6 @@ namespace PlayerMonitor.Modes
         public override string Name { get { return nameof(MonitorPlayer); } }
         public override string Description { get { return "QAQ反正没人用,懒的写介绍了"; } }
 
-        private delegate PingReply Run();
         private MonitorPlayerConfig Config;
         private PlayerManager MainPlayerManager;
         private Ping SLP;
@@ -101,7 +100,7 @@ namespace PlayerMonitor.Modes
             while (State == States.Running)
             {
                 //获取Ping信息
-                PingReply PingResult = ExceptionHandler(SLP.Send);
+                PingReply PingResult = ExceptionHandler(SLP);
                 //如果是null就代表状态已经切换为Abort需要停止循环了
                 if (PingResult == null) return;
                 //MC在开启期间被Ping会响应一些不完整的包,我觉得处理方法应该给个提示然后sleep几秒后重新Ping(但是我懒的写提示信息了)
@@ -145,7 +144,7 @@ namespace PlayerMonitor.Modes
                 return $"&e{serverVersionName}";
         }
         
-        private PingReply ExceptionHandler(Run run)
+        private PingReply ExceptionHandler(Ping slp)
         {
             DateTime? FirstTime = null;
             int RetryTime = 1000 * 6;
@@ -156,7 +155,7 @@ namespace PlayerMonitor.Modes
                 PingReply SLPResult = null;
                 try
                 {
-                    SLPResult = run();
+                    SLPResult = slp.Send();
                     if (SLPResult != null)
                     {
                         FirstTime = null;
@@ -202,42 +201,48 @@ namespace PlayerMonitor.Modes
                         continue;
                     }
                 }
-                catch (JsonException je)
+                catch (JsonException)
                 {
-                    IsFirstPrint = true;
-                    Console.Title = string.Empty;
-                    Screen.Clear();
-                    if (je is JsonSerializationException)
+                    try
                     {
-                        string ErrorJson = SLPResult?.ToString();
-                        if (!string.IsNullOrWhiteSpace(ErrorJson) &&
-                            ErrorJson.Contains("Server is still starting! Please wait before reconnecting"))
+                        return JsonConvert.DeserializeObject<PingReply>(slp.ToString());
+                    }
+                    catch (JsonException je)
+                    {
+                        IsFirstPrint = true;
+                        Console.Title = string.Empty;
+                        Screen.Clear();
+                        if (je is JsonSerializationException)
                         {
-                            if (TryTick > short.MaxValue)
+                            string ErrorJson = SLPResult?.ToString();
+                            if (!string.IsNullOrWhiteSpace(ErrorJson) &&
+                                ErrorJson.Contains("Server is still starting! Please wait before reconnecting"))
                             {
-                                Console.WriteLine("这服务器怎么一直在开启中的,怕是出了什么bug了...");
-                                Console.WriteLine($"请把这些信息复制给作者来修bug:{je}");
+                                if (TryTick > short.MaxValue)
+                                {
+                                    Console.WriteLine("这服务器怎么一直在开启中的,怕是出了什么bug了...");
+                                    Console.WriteLine($"请把这些信息复制给作者来修bug:{je}");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("服务器正在开启中,程序将暂时16秒等待服务器开启...");
+                                    Thread.Sleep(1000 * 16);
+                                }
+                                TryTick++;
+                                continue;
                             }
-                            else
-                            {
-
-                                Console.WriteLine("服务器正在开启中,程序将暂时16秒等待服务器开启...");
-                                Thread.Sleep(1000 * 16);
-                            }
-                            TryTick++;
-                            continue;
                         }
+                        PrintTime(ref FirstTime);
+                        ColorfullyConsole.WriteLine("&cjson解析错误&f:&r服务器返回了一个无法被解析的json");
+                        if (SLPResult != null)
+                        {
+                            ColorfullyConsole.WriteLine($"&e无法被解析的json&f:");
+                            ColorfullyConsole.WriteLine($"{SLPResult.ToString()}");
+                        }
+                        ColorfullyConsole.WriteLine($"&e详细信息&r:&c{je}");
+                        RetryHandler(ref RetryTime, ref TryTick, MaxTryTick);
+                        continue;
                     }
-                    PrintTime(ref FirstTime);
-                    ColorfullyConsole.WriteLine("&cjson解析错误&f:&r服务器返回了一个无法被解析的json");
-                    if (SLPResult != null)
-                    {
-                        ColorfullyConsole.WriteLine($"&e无法被解析的json&f:");
-                        ColorfullyConsole.WriteLine($"{SLPResult.ToString()}");
-                    }
-                    ColorfullyConsole.WriteLine($"&e详细信息&r:&c{je}");
-                    RetryHandler(ref RetryTime, ref TryTick, MaxTryTick);
-                    continue;
                 }
                 catch (NullReferenceException nre)
                 {
