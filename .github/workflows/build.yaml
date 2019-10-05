@@ -19,7 +19,6 @@ jobs:
         dotnet publish --configuration Release --runtime win-x64
         dotnet publish --configuration Release --runtime win-x86
         dotnet publish --configuration Release --runtime win10-arm
-        dotnet publish --configuration Release --runtime win10-arm
 
   Linux:
     runs-on: ubuntu-latest
