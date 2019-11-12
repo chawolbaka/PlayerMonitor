@@ -199,19 +199,23 @@ namespace PlayerMonitor
             int length = 0;
             const byte AsciiCharLength = 1;
             const byte ChineseCharLength = 2;
-            
+
             for (int i = 0; i < str.Length; i++)
             {
+                int c;
                 //样式代码会直接被跳过,不会被计算进去
                 if (str[i] == '&' && i != str.Length - 1)
                 {
-                    int c = str[i + 1];
+                    c = str[i + 1];
                     //如果是样式代码就跳过,不算到长度里面去
-                    if ((c >= 30 && c <= 39) || (c >= 97 && c <= 101) || ColorfullyConsole.IsFormatCodeSupport(str[i+1]))
-                        i++;
-                    else
-                        length += (c >= 20 && c <= 126) ? AsciiCharLength : ChineseCharLength;
+                    if ((c >= 30 && c <= 39) || (c >= 97 && c <= 102) || ColorfullyConsole.IsFormatCodeSupport(str[i+1]))
+                    {
+                        i++; 
+                        continue;
+                    }
                 }
+                c = str[i];
+                length += (c >= 20 && c <= 126) ? AsciiCharLength : ChineseCharLength;
             }
             return length;
         }
