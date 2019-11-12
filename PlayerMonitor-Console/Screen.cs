@@ -187,10 +187,7 @@ namespace PlayerMonitor
             if (length > 0)
             {
                 StringBuilder WhiteSpace = new StringBuilder();
-                for (int i = 0; i < length; i++)
-                {
-                    WhiteSpace.Append(' ');
-                }
+                WhiteSpace.Append(' ', length);
                 WriteAt(WhiteSpace.ToString(), start_x, start_y);
             }
         }
@@ -208,34 +205,13 @@ namespace PlayerMonitor
                 //样式代码会直接被跳过,不会被计算进去
                 if (str[i] == '&' && i != str.Length - 1)
                 {
-                    switch (str[i + 1])
-                    {
-                        //颜色代码
-                        case '0': i++; continue;
-                        case '1': i++; continue;
-                        case '2': i++; continue;
-                        case '3': i++; continue;
-                        case '4': i++; continue;
-                        case '5': i++; continue;
-                        case '6': i++; continue;
-                        case '7': i++; continue;
-                        case '8': i++; continue;
-                        case '9': i++; continue;
-                        case 'a': i++; continue;
-                        case 'b': i++; continue;
-                        case 'c': i++; continue;
-                        case 'd': i++; continue;
-                        case 'e': i++; continue;
-                        case 'f': i++; continue;
-                    }
-                    if (ColorfullyConsole.IsFormatCodeSupport(str[i + 1]))
-                    {
+                    int c = str[i + 1];
+                    //如果是样式代码就跳过,不算到长度里面去
+                    if ((c >= 30 && c <= 39) || (c >= 97 && c <= 101) || ColorfullyConsole.IsFormatCodeSupport(str[i+1]))
                         i++;
-                        continue;
-                    }
+                    else
+                        length += (c >= 20 && c <= 126) ? AsciiCharLength : ChineseCharLength;
                 }
-                //如果不是样式代码的话就可以正常处理了，这边中文占2格 英文占1格
-                length += Encoding.UTF8.GetByteCount(str[i].ToString()) > 1 ? ChineseCharLength : AsciiCharLength;
             }
             return length;
         }
