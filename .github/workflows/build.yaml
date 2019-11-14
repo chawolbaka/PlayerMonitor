@@ -3,24 +3,28 @@ name: build
 on: [push]
 
 jobs:
-  Windows:
-    runs-on: windows-latest
+  DotNet:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '2.1.802'
+    #在隔壁遇到过publish和build都没问题，但是一指定平台就不能编译的问题。这边为了防止那种情况把所有平台都塞了进去
     - name: Build
       run: |
-        dotnet build
+        dotnet build --configuration Debug
         dotnet build --configuration Release
+        dotnet publish --configuration Debug
         dotnet publish --configuration Release
         dotnet publish --configuration Release --runtime win-x64
         dotnet publish --configuration Release --runtime win-x86
-        dotnet publish --configuration Release --runtime win10-arm
+        dotnet publish --configuration Release --runtime linux-x64
+        dotnet publish --configuration Release --runtime linux-arm
+        dotnet publish --configuration Release --runtime osx-x64
 
-  Linux:
+  CoreRT:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -30,14 +34,12 @@ jobs:
         dotnet-version: '2.1.802'
     - name: Build
       run: |
-        dotnet build
-        dotnet build --configuration Release
-        dotnet publish --configuration Release
-        dotnet publish --configuration Release --runtime linux-x64
-        dotnet publish --configuration Release --runtime linux-arm
+        dotnet add PlayerMonitor-Console\PlayerMonitor.csproj package Microsoft.DotNet.ILCompiler -v 1.0.0-alpha-*
+        dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r win-x64 /p:CORE_RT=TRUE
+        dotnet publish PlayerMonitor-Console\PlayerMonitor.csproj -c Release -r linux-x64 /p:CORE_RT=TRUE
 
-  MacOS:
-    runs-on: macos-latest
+  Warp:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - name: Setup .NET Core
@@ -46,7 +48,6 @@ jobs:
         dotnet-version: '2.1.802'
     - name: Build
       run: |
-        dotnet build
-        dotnet build --configuration Release
-        dotnet publish --configuration Release
-        dotnet publish --configuration Release --runtime osx-x64
+        dotnet tool install --global dotnet-warp
+        dotnet-warp PlayerMonitor-Console\PlayerMonitor.csproj -p:WARP=TRUE
+        dotnet-warp PlayerMonitor-Console\PlayerMonitor.csproj -p:WARP=TRUE -l aggressive --verbose
