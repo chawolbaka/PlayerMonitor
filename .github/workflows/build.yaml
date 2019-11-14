@@ -50,4 +50,3 @@ jobs:
       run: |
         dotnet tool install --global dotnet-warp
         dotnet-warp -p:WARP=TRUE
-        dotnet-warp -p:WARP=TRUE -l aggressive --verbose
