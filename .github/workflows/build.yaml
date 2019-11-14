@@ -46,7 +46,8 @@ jobs:
       with:
         dotnet-version: '2.1.802'
     - name: Build
+      working-directory: .\PlayerMonitor-Console
       run: |
         dotnet tool install --global dotnet-warp
-        dotnet-warp PlayerMonitor-Console\PlayerMonitor.csproj -p:WARP=TRUE
-        dotnet-warp PlayerMonitor-Console\PlayerMonitor.csproj -p:WARP=TRUE -l aggressive --verbose
+        dotnet-warp -p:WARP=TRUE
+        dotnet-warp -p:WARP=TRUE -l aggressive --verbose
