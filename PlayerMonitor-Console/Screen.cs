@@ -138,15 +138,15 @@ namespace PlayerMonitor
         }
         /// <summary>将数据重新写入终端</summary>
         /// <param name="y">起始行(这行前面的行不会被处理)</param>
-        public static void ReWrite(int y = 0)
+        public static void ReWrite(int y = 0, bool controlCursor = true)
         {
             foreach (Line line in Lines.Values)
             {
                 if (line.y >= y)
                 {
                     //因为我不知道当前行的字会有多长,所以直接整行清理掉了
-                    WriteWhiteSpaceAt(Console.BufferWidth, 0, line.y);
-                    line.WriteToConsole();
+                    WriteWhiteSpaceAt(Console.BufferWidth, 0, line.y, controlCursor);
+                    line.WriteToConsole(controlCursor);
                 }
             }
             Console.SetCursorPosition(0, Lines.Count <= Console.BufferHeight ? Lines.Count : Console.BufferHeight);
@@ -154,10 +154,9 @@ namespace PlayerMonitor
         /// <summary>清空屏幕后重新写入终端</summary>
         public static void Refurbih()
         {
-            //bug:高频率下会看见光标跑到0,0(设置CursorVisible没明显效果)
             Console.CursorVisible = false;
             ColorfullyConsole.Clear();
-            ReWrite(0);
+            ReWrite(0, false);
             Console.CursorVisible = true;
         }
         public static void Clear()
@@ -166,13 +165,13 @@ namespace PlayerMonitor
             ColorfullyConsole.Clear();
         }
 
-        
 
-        private static void WriteAt(string str, int x, int y)
+        private static void WriteAt(string str, int x, int y, bool controlCursor = true)
         {
             int buff_top = Console.CursorTop;
             int buff_left = Console.CursorLeft;
-            Console.CursorVisible = false;
+            if (controlCursor)
+                Console.CursorVisible = false;
             Console.SetCursorPosition(x, y);
             //颜色代码至少占2个字符,所以长度不满3的情况下可以直接用Console.Write提升一点点效率(大概可以?)
             if (str.Length > 2)
@@ -180,15 +179,16 @@ namespace PlayerMonitor
             else
                 Console.Write(str);
             Console.SetCursorPosition(buff_left, buff_top);
-            Console.CursorVisible = true;
+            if (controlCursor)
+                Console.CursorVisible = true;
         }
-        private static void WriteWhiteSpaceAt(int length, int start_x, int start_y)
+        private static void WriteWhiteSpaceAt(int length, int start_x, int start_y, bool controlCursor = true)
         {
             if (length > 0)
             {
                 StringBuilder WhiteSpace = new StringBuilder();
                 WhiteSpace.Append(' ', length);
-                WriteAt(WhiteSpace.ToString(), start_x, start_y);
+                WriteAt(WhiteSpace.ToString(), start_x, start_y, controlCursor);
             }
         }
         private static int GetStringLength(string str)
@@ -223,11 +223,11 @@ namespace PlayerMonitor
         {
             public int y { get; set; }
             public List<Field> Fields { get; set; } = new List<Field>();
-            public void WriteToConsole()
+            public void WriteToConsole(bool controlCursor = true)
             {
                 foreach (var field in Fields)
                 {
-                    WriteAt(field.Text, field.StartLocation, y);
+                    WriteAt(field.Text, field.StartLocation, y, controlCursor);
                 }
             }
             public class Field
