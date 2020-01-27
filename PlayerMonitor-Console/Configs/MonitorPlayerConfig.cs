@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PlayerMonitor.ConsoleOptions;
 using PlayerMonitor.ConsolePlus;
+using PlayerMonitor.Modes;
 
 namespace PlayerMonitor.Configs
 {
@@ -75,8 +76,9 @@ namespace PlayerMonitor.Configs
                         case "--highlight-color":
                             this.HighlightColor = GetColorCode(args[++i]); break;
                         case "--color-minecraft":
-                            this.SwitchColorScheme(new ConsolePlus.ColorSchemes.MinecraftColorScheme());
-                            break;
+                            this.SwitchColorScheme(new ConsolePlus.ColorSchemes.MinecraftColorScheme()); break;
+                        case "--watchcat":
+                            new Watchcat().Start(1000 * 26, 8, 20); break;
                         case "--script-logged":
                             this.RunCommandForPlayerJoin = args.Length >= i + 1 ? args[++i] : throw new Exception($"option {args[i]} it value is empty"); break;
                         case "--script-loggedout":
@@ -226,13 +228,14 @@ namespace PlayerMonitor.Configs
                 Console.WriteLine(" --script-logged\t\t当一个玩家加入服务器后会被执行(如果路径中有空格需要在头尾加双引号)");
                 Console.WriteLine(" --script-loggedout\t\t当一个玩家离开服务器后会被执行(如果路径中有空格需要在头尾加双引号)\r\n");
 
-                Console.WriteLine(" --color-minecraft \t\t使用MC的RGB值(仅支持Windows)\r\n");
+                Console.WriteLine(" --color-minecraft \t\t使用MC的RGB值(仅支持Windows)");
             }
             else
             {
                 Console.WriteLine(" --script-logged\t\t当一个玩家加入服务器后会被执行");
-                Console.WriteLine(" --script-loggedout\t\t当一个玩家离开服务器后会被执行\r\n");
+                Console.WriteLine(" --script-loggedout\t\t当一个玩家离开服务器后会被执行");
             }
+            Console.WriteLine(" --watchcat\t\t\t监视CPU使用率,如果连续8秒高于20%就自杀\r\n");
             Program.Exit(false, -1);
         }
     }
