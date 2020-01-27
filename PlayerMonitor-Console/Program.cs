@@ -21,7 +21,7 @@ namespace PlayerMonitor
         {
             //修改CMD/PowerShell/Linux Shell的配置.
             ConsoleInitializing();
-            MainMode = CrerteModeByConsoleOption(args.ToList());//创建主模式的实例
+            MainMode = CrerteModeByConsoleOption(args);//创建主模式的实例
             MainMode.StartAsync();
 
             //Olny Windows Support this
@@ -42,7 +42,7 @@ namespace PlayerMonitor
             //linux下设置终端标题感觉不太好的样子(虽然后面还是会设置
             if (Platform.IsWindows)
                 Console.Title = $"{Program.Name}({Program.Version})";
-            
+
             //Win10以下的Windows不知道为什么会有乱码或者字显示不全这样子的问题
             if (Platform.IsWindows && Environment.OSVersion.Version.Major >= 10)
             {
@@ -64,7 +64,7 @@ namespace PlayerMonitor
             //所以暂时先加个监视窗口变化的线程来解决这个问题
             if (!Platform.IsWindows)
             {
-                Thread HeightWatching = new Thread(x =>
+                Thread HeightWatching = new Thread(() =>
                 {
                     int LastHeight = Console.WindowHeight;
                     while (true)
@@ -85,13 +85,13 @@ namespace PlayerMonitor
                 HeightWatching.Start();
             }
         }
-        private static Mode CrerteModeByConsoleOption(List<string> args)
+        private static Mode CrerteModeByConsoleOption(Span<string> args)
         {
             const Mode.Type DefaultMode = Mode.Type.Monitor;
             Mode.Type RunningMode;
             //从命令行选项读取要创建的模式
-            if (args.Count > 0 && Enum.TryParse(args[0], out RunningMode))
-                args.RemoveAt(0);
+            if (args.Length > 0 && Enum.TryParse(args[0], out RunningMode))
+                args = args.Slice(1);
             else
                 RunningMode = DefaultMode;
             //创建模式

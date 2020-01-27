@@ -21,11 +21,14 @@ namespace PlayerMonitor.Configs
         public string RunCommandForPlayerJoin { get; set; }
         public string RunCommandForPlayerDisconnected { get; set; }
 
-        public MonitorPlayerConfig(List<string> argumentList)
+        public MonitorPlayerConfig(ReadOnlySpan<string> args)
         {
-            if (argumentList.Any())
+            if (args == null)
+                throw new ArgumentNullException(nameof(args));
+
+            if (args.Length > 0)
             {
-                LoadByConsoleOptions(argumentList);
+                LoadByConsoleOptions(args);
                 if (this.ServerPort == default(ushort))
                     this.ServerPort = Minecraft.DefaultPortOfServer;
                 if (string.IsNullOrWhiteSpace(this.ServerHost))
@@ -35,20 +38,20 @@ namespace PlayerMonitor.Configs
                 }
             }
             else
-                base.LoadByConsoleOptions(argumentList);
+                base.LoadByConsoleOptions(args);
         }
 
-        protected override void LoadByConsoleOptions(List<string> argumentList)
+        protected override void LoadByConsoleOptions(ReadOnlySpan<string> args)
         {
-            if (argumentList == null)
-                throw new ArgumentNullException(nameof(argumentList));
+            if (args == null)
+                throw new ArgumentNullException(nameof(args));
 
-            for (int i = 0; i < argumentList.Count; i++)
+            for (int i = 0; i < args.Length; i++)
             {
                 try
                 {
                     //这边我有点想改成大小写敏感..
-                    switch (argumentList[i].ToLower())
+                    switch (args[i].ToLower())
                     {
                         case "-h":
                         case "-help":
@@ -57,39 +60,39 @@ namespace PlayerMonitor.Configs
                         case "-i":
                         case "-ip":
                         case "-host":
-                            this.ServerHost = argumentList[++i]; break;
+                            this.ServerHost = args[++i]; break;
                         case "-p":
                         case "-port":
-                            this.ServerPort = ushort.Parse(argumentList[++i]); break;
+                            this.ServerPort = ushort.Parse(args[++i]); break;
                         case "-s":
                         case "-sleep":
-                            this.SleepTime = int.Parse(argumentList[++i]); break;
+                            this.SleepTime = int.Parse(args[++i]); break;
                         case "-b":
                         case "-blood":
-                            this.Blood = int.Parse(argumentList[++i]); break;
+                            this.Blood = int.Parse(args[++i]); break;
                         case "--highlight":
-                            this.HighlightList.AddRange(argumentList[++i].Replace('，',',').Split(',')); break;
+                            this.HighlightList.AddRange(args[++i].Replace('，',',').Split(',')); break;
                         case "--highlight-color":
-                            this.HighlightColor = GetColorCode(argumentList[++i]); break;
+                            this.HighlightColor = GetColorCode(args[++i]); break;
                         case "--color-minecraft":
                             this.SwitchColorScheme(new ConsolePlus.ColorSchemes.MinecraftColorScheme());
                             break;
                         case "--script-logged":
-                            this.RunCommandForPlayerJoin = argumentList.Count >= i + 1 ? argumentList[++i] : throw new Exception($"option {argumentList[i]} it value is empty"); break;
+                            this.RunCommandForPlayerJoin = args.Length >= i + 1 ? args[++i] : throw new Exception($"option {args[i]} it value is empty"); break;
                         case "--script-loggedout":
-                            this.RunCommandForPlayerDisconnected = argumentList.Count >= i + 1 ? argumentList[++i] : throw new Exception($"option {argumentList[i]} it value is empty");break;
+                            this.RunCommandForPlayerDisconnected = args.Length >= i + 1 ? args[++i] : throw new Exception($"option {args[i]} it value is empty");break;
                         default:
-                            ColorfullyConsole.WriteLine($"&c错误:\r\n &r未知命令行选项:{argumentList[i]}\r\n");
-                            Program.Exit(false);
+                            ColorfullyConsole.WriteLine($"&c错误:\r\n &r未知命令行选项:{args[i]}\r\n");
+                            Program.Exit(false,-1);
                             break;
                     }
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    if (argumentList.Count <= i + 1)
+                    if (args.Length <= i + 1)
                     {
-                        ColorfullyConsole.WriteLine($"&c错误:\r\n &r命令行选项 \"&e{argumentList[i]}&r\" 需要一个参数.\r\n");
-                        Program.Exit(false);
+                        ColorfullyConsole.WriteLine($"&c错误:\r\n &r命令行选项 \"&e{args[i]}&r\" 需要一个参数.\r\n");
+                        Program.Exit(false,-1);
                     }
                     else
                         throw;
@@ -97,8 +100,8 @@ namespace PlayerMonitor.Configs
                 }
                 catch (FormatException)
                 {
-                    ColorfullyConsole.Write($"&c错误:\r\n &r命令行选项 \"&e{argumentList[i]}&r\" 的值无法被转换,");
-                    switch (argumentList[i].ToLower())
+                    ColorfullyConsole.Write($"&c错误:\r\n &r命令行选项 \"&e{args[i]}&r\" 的值无法被转换,");
+                    switch (args[i].ToLower())
                     {
                         case "-p":
                         case "-port":
@@ -115,7 +118,7 @@ namespace PlayerMonitor.Configs
                             break;
                     }
                     Console.WriteLine();
-                    Program.Exit(false);
+                    Program.Exit(false,-1);
                 }
             }
             //这里我当初是怎么想的???
@@ -128,7 +131,7 @@ namespace PlayerMonitor.Configs
             if(string.IsNullOrWhiteSpace(arg))
             {
                 ColorfullyConsole.Write($"&c错误: \r\n &r选项 \"&e--highlight-color&r\" 没有值");
-                Program.Exit(false); return "";
+                Program.Exit(false,-1); return "";
             }
 
             try
@@ -153,7 +156,7 @@ namespace PlayerMonitor.Configs
                 ConsoleColor CurrentColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), name);
                 ColorfullyConsole.WriteLine($"0x{((int)CurrentColor).ToString("x")}: {name}", CurrentColor);
             }
-            Program.Exit(false); return "";
+            Program.Exit(false,-1); return "";
         }
 
         bool IConsoleGuide.OpenGuide()
@@ -230,7 +233,7 @@ namespace PlayerMonitor.Configs
                 Console.WriteLine(" --script-logged\t\t当一个玩家加入服务器后会被执行");
                 Console.WriteLine(" --script-loggedout\t\t当一个玩家离开服务器后会被执行\r\n");
             }
-            Program.Exit(false);
+            Program.Exit(false, -1);
         }
     }
 }

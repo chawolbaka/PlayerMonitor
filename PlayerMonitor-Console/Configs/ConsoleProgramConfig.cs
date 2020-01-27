@@ -12,9 +12,9 @@ namespace PlayerMonitor.Configs
         public virtual string WindowTitleStyle { get; protected set; }
         public virtual ConsoleColorScheme ColorScheme { get; protected set; }
 
-        protected virtual void LoadByConsoleOptions(List<string> argumentList)
+        protected virtual void LoadByConsoleOptions(ReadOnlySpan<string> args)
         {
-            if(!argumentList.Any()&&this is IConsoleGuide)
+            if(args==null||args.Length==0&&this is IConsoleGuide)
             {
                 IConsoleGuide Guide = this as IConsoleGuide;
                  if(!Guide.OpenGuide())

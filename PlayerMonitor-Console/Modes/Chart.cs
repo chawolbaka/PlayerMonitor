@@ -29,7 +29,7 @@ namespace PlayerMonitor.Modes
         {
             State = States.Initializing;
             //先这样子用着隔壁的,反正这类也不会被加载到
-            Config = new MonitorPlayerConfig(Environment.GetCommandLineArgs().ToList());
+            Config = new MonitorPlayerConfig(Environment.GetCommandLineArgs());
             DataPath = string.IsNullOrWhiteSpace(savePath) != true ? savePath : throw new ArgumentNullException(nameof(savePath));
             ping = new Ping(Config.ServerHost,Config.ServerPort);
         }
