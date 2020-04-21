@@ -9,11 +9,15 @@ namespace PlayerMonitor.Modes
 {
     public class Watchcat
     {
+        public static readonly Watchcat Instance = new Watchcat();
         private CancellationTokenSource token = new CancellationTokenSource();
         public async void Start(int waitTime, byte maxOverflow, double cpuUsage)
         {
             if (cpuUsage > 100)
                 throw new ArgumentOutOfRangeException(nameof(cpuUsage), "CPU Usage cannot over 100%");
+
+            if (token == null || token.IsCancellationRequested)
+                token = new CancellationTokenSource();
 
             int OverflowCount = 0;
             while (!token.IsCancellationRequested)
@@ -22,7 +26,7 @@ namespace PlayerMonitor.Modes
                 if (CpuUsage >= cpuUsage)
                 {
                     if (++OverflowCount >= maxOverflow)
-                        Program.Exit("killed by Watchcat.", true, -1);
+                        Program.Exit("killed by Watchcat.", -1);
 
                     //发现过高的CPU使用率后以每秒1次的速度去检查CPU使用率，如果一直那么高就自杀。
                     await Task.Delay(500);

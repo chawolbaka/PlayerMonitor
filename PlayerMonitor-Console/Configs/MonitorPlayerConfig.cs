@@ -52,7 +52,7 @@ namespace PlayerMonitor.Configs
                 try
                 {
                     //这边我有点想改成大小写敏感..
-                    switch (args[i].ToLower())
+                    switch (args[i].ToLowerInvariant())
                     {
                         case "-h":
                         case "-help":
@@ -78,7 +78,7 @@ namespace PlayerMonitor.Configs
                         case "--color-minecraft":
                             this.SwitchColorScheme(new ConsolePlus.ColorSchemes.MinecraftColorScheme()); break;
                         case "--watchcat":
-                            new Watchcat().Start(1000 * 26, 8, 20); break;
+                            Watchcat.Instance.Start(1000 * 26, 8, 38); break;
                         case "--script-logged":
                             this.RunCommandForPlayerJoin = args.Length >= i + 1 ? args[++i] : throw new Exception($"option {args[i]} it value is empty"); break;
                         case "--script-loggedout":
@@ -89,12 +89,13 @@ namespace PlayerMonitor.Configs
                             break;
                     }
                 }
-                catch (ArgumentOutOfRangeException)
+                catch (IndexOutOfRangeException)
                 {
+                    //这边坐标可能有问题
                     if (args.Length <= i + 1)
                     {
-                        ColorfullyConsole.WriteLine($"&c错误:\r\n &r命令行选项 \"&e{args[i]}&r\" 需要一个参数.\r\n");
-                        Program.Exit(false,-1);
+                        ColorfullyConsole.WriteLine($"&c错误:\r\n &r命令行选项 \"&e{args[i-1]}&r\" 需要一个参数.\r\n");
+                        Program.Exit(false, -1);
                     }
                     else
                         throw;
@@ -102,8 +103,8 @@ namespace PlayerMonitor.Configs
                 }
                 catch (FormatException)
                 {
-                    ColorfullyConsole.Write($"&c错误:\r\n &r命令行选项 \"&e{args[i]}&r\" 的值无法被转换,");
-                    switch (args[i].ToLower())
+                    ColorfullyConsole.Write($"&c错误:\r\n &r命令行选项 \"&e{args[i-1]}&r\" 的值无法被转换，");
+                    switch (args[i-1].ToLowerInvariant())
                     {
                         case "-p":
                         case "-port":
@@ -113,10 +114,10 @@ namespace PlayerMonitor.Configs
                         case "-b":
                         case "-sleep":
                         case "-blood":
-                            Console.WriteLine("它不是一个有效的32位带符号整数.");
+                            Console.WriteLine("它不是一个有效的32位带符号整数。");
                             break;
                         default:
-                            Console.WriteLine("超出范围.");
+                            Console.WriteLine("超出范围。");
                             break;
                     }
                     Console.WriteLine();
@@ -144,10 +145,10 @@ namespace PlayerMonitor.Configs
             }
             catch (FormatException)
             {
-                string ColorText = arg.ToLower();
+                string ColorText = arg.ToLowerInvariant();
                 foreach (var name in typeof(ConsoleColor).GetEnumNames())
                 {
-                    if (name.ToLower()==ColorText&&Enum.TryParse(name, out ConsoleColor color))
+                    if (name.ToLowerInvariant()==ColorText&&Enum.TryParse(name, out ConsoleColor color))
                         return ColorfullyConsole.DefaultColorCodeMark + ((int)color).ToString("x");
                 }
             }
@@ -156,7 +157,7 @@ namespace PlayerMonitor.Configs
             foreach (var name in typeof(ConsoleColor).GetEnumNames())
             {
                 ConsoleColor CurrentColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), name);
-                ColorfullyConsole.WriteLine($"0x{((int)CurrentColor).ToString("x")}: {name}", CurrentColor);
+                ColorfullyConsole.WriteLine($"0x{((int)CurrentColor):x}: {name}", CurrentColor);
             }
             Program.Exit(false,-1); return "";
         }
@@ -236,7 +237,7 @@ namespace PlayerMonitor.Configs
                 Console.WriteLine(" --script-loggedout\t\t当一个玩家离开服务器后会被执行");
             }
             Console.WriteLine(" --watchcat\t\t\t监视CPU使用率,如果连续8秒高于20%就自杀\r\n");
-            Program.Exit(false, -1);
+            Program.Exit(false);
         }
     }
 }

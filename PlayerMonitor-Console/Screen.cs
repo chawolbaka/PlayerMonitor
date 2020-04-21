@@ -184,12 +184,8 @@ namespace PlayerMonitor
         }
         private static void WriteWhiteSpaceAt(int length, int start_x, int start_y, bool controlCursor = true)
         {
-            if (length > 0)
-            {
-                StringBuilder WhiteSpace = new StringBuilder();
-                WhiteSpace.Append(' ', length);
-                WriteAt(WhiteSpace.ToString(), start_x, start_y, controlCursor);
-            }
+            if (length > 0 && start_x >= 0 && start_y >= 0)
+                WriteAt(new string(' ', length), start_x, start_y, controlCursor);        
         }
         private static int GetStringLength(string str)
         {
@@ -208,14 +204,14 @@ namespace PlayerMonitor
                 {
                     c = str[i + 1];
                     //如果是样式代码就跳过,不算到长度里面去
-                    if ((c >= 30 && c <= 39) || (c >= 97 && c <= 102) || ColorfullyConsole.IsFormatCodeSupport(str[i+1]))
+                    if ((c >= 48 && c <= 57) || (c >= 97 && c <= 102) || ColorfullyConsole.IsFormatCodeSupport(str[i+1]))
                     {
                         i++; 
                         continue;
                     }
                 }
                 c = str[i];
-                length += (c >= 20 && c <= 126) ? AsciiCharLength : ChineseCharLength;
+                length += (c >= 32 && c <= 126) ? AsciiCharLength : ChineseCharLength;
             }
             return length;
         }
