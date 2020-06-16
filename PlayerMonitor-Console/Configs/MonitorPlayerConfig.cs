@@ -78,7 +78,7 @@ namespace PlayerMonitor.Configs
                         case "--color-minecraft":
                             this.SwitchColorScheme(new ConsolePlus.ColorSchemes.MinecraftColorScheme()); break;
                         case "--watchcat":
-                            Watchcat.Instance.Start(1000 * 26, 8, 38); break;
+                            Watchcat.Instance.Start(1000 * 26, 8, 100.0 / (Environment.ProcessorCount + 0.3)) ; break;
                         case "--script-logged":
                             this.RunCommandForPlayerJoin = args.Length >= i + 1 ? args[++i] : throw new Exception($"option {args[i]} it value is empty"); break;
                         case "--script-loggedout":
