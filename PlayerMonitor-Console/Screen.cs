@@ -130,7 +130,7 @@ namespace PlayerMonitor
                     }
                 }
             }
-            Console.SetCursorPosition(Console.CursorLeft, Console.CursorTop - 1);
+            Console.SetCursorPosition(0, Lines.Count);
         }
         public static bool HasLine(Guid tag)
         {
